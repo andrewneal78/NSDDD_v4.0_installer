@@ -1,0 +1,29 @@
+# Tested core versions. Python 3.11/3.12 recommended. Linux installer selects CPU PyTorch.
+# Intel Macs: PyTorch 2.9 has no Intel-Mac build, so they get PyTorch 2.2.2 with numpy 1.26 and scipy 1.13 (tested 2026-10-08:
+# identical result set and clusters to Apple silicon for the same search, scores within 0.002).
+torch==2.9.1; sys_platform != "darwin" or platform_machine != "x86_64"
+torch==2.2.2; sys_platform == "darwin" and platform_machine == "x86_64"
+transformers==4.53.2
+sentence-transformers==4.1.0
+huggingface_hub==0.36.2
+tokenizers==0.21.4
+safetensors==0.5.3
+numpy==2.0.2; sys_platform != "darwin" or platform_machine != "x86_64"
+numpy==1.26.4; sys_platform == "darwin" and platform_machine == "x86_64"
+rapidfuzz==3.14.6
+scipy==1.17.1; sys_platform != "darwin" or platform_machine != "x86_64"
+scipy==1.13.1; sys_platform == "darwin" and platform_machine == "x86_64"
+scikit-learn==1.6.1
+pandas==2.2.3
+networkx==3.2.1
+matplotlib==3.10.8
+seaborn==0.13.2
+ipywidgets==8.1.5
+ipykernel==6.29.5
+jupyter_core==5.7.2
+jupyter_server==2.16.0
+nbconvert==7.16.6
+voila==0.5.11
+tqdm==4.67.1
+requests==2.32.3
+psutil==7.2.1

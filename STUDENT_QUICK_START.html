@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NSDDD 4.0 Quick Start</title>
+<style>
+:root{--bg:#fafafa;--fg:#1a202c;--muted:#546e7a;--card:#ffffff;--line:#d9dee3;--accent:#3949ab;--note:#fff8e1;--noteline:#f9a825}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--fg:#e6e9ed;--muted:#9aa7b2;--card:#1d2127;--line:#2f353d;--accent:#9fa8da;--note:#2b2514;--noteline:#c58b12}}
+:root[data-theme="dark"]{--bg:#14171c;--fg:#e6e9ed;--muted:#9aa7b2;--card:#1d2127;--line:#2f353d;--accent:#9fa8da;--note:#2b2514;--noteline:#c58b12}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6}
+main{max-width:760px;margin:0 auto;padding:28px 16px 56px}
+h1{font-size:1.7rem;margin:0 0 4px}
+h2{font-size:1.2rem;margin:32px 0 10px;color:var(--accent)}
+.lead{color:var(--muted);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:12px 0}
+ol,ul{padding-left:1.3rem;margin:8px 0}
+li{margin:5px 0}
+code,kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:rgba(127,127,127,.15);padding:1px 5px;border-radius:4px;font-size:.92em}
+.note{background:var(--note);border-left:4px solid var(--noteline);padding:10px 14px;border-radius:4px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>NSDDD 4.0 Quick Start</h1>
+<p class="lead">Search 680 national security and defence documents from 123 countries by meaning, in English and in the original languages. It runs on your own computer; nothing you search for leaves it. This is a pre-release build: documents and figures may change before the public release.</p>
+
+<h2>1. Before you start</h2>
+<div class="card">
+<table>
+<tr><th></th><th>Minimum</th><th>Better</th></tr>
+<tr><td>Memory</td><td>8 GB</td><td>16 GB</td></tr>
+<tr><td>Free disk space</td><td>10 GB (Windows zip) or 8 GB (Mac)</td><td>15 GB</td></tr>
+<tr><td>Computer</td><td>Windows 10 or 11 (64-bit), or a Mac (Apple silicon or Intel) with macOS 12 or later</td><td>Any recent laptop</td></tr>
+<tr><td>Internet</td><td colspan="2">Windows: not needed. Mac: once, to download about 2.5 GB.</td></tr>
+</table>
+</div>
+
+<h2>2. Install (once)</h2>
+<div class="two">
+<div class="card">
+<strong>Windows</strong>
+<ol>
+<li>Unzip the package into a <em>short</em> folder on your main drive, for example <code>C:\NSDDD</code>. Avoid OneDrive, Desktop and long folder names.</li>
+<li>Double-click <code>Setup.bat</code>. If Windows says &lsquo;Windows protected your PC&rsquo;, click <em>More info</em>, then <em>Run anyway</em>.</li>
+<li>If it asks permission to install the Microsoft Visual C++ runtime, say yes. If your computer does not allow it, ask IT support to run <code>runtime\vc_redist.x64.exe</code>.</li>
+<li>Wait 5 to 10 minutes for &lsquo;Setup complete&rsquo;.</li>
+</ol>
+</div>
+<div class="card">
+<strong>Mac</strong>
+<ol>
+<li>Put the installer folder somewhere permanent, for example your home folder.</li>
+<li>Control-click <code>Install NSDDD.command</code>, choose <em>Open</em>, then <em>Open</em> again (only the first time).</li>
+<li>Leave the window open. It needs no Python of its own and takes 20 to 45 minutes, mostly downloading.</li>
+<li>When it says &lsquo;Done&rsquo;, you can close it. Do not move the folder afterwards.</li>
+</ol>
+</div>
+</div>
+
+<h2>3. Start a search session</h2>
+<div class="two">
+<div class="card"><strong>Windows:</strong> double-click <code>Start NSDDD.bat</code>. Use <code>Start NSDDD Low Power.bat</code> on a slow computer.</div>
+<div class="card"><strong>Mac:</strong> double-click <code>Launch.command</code>.</div>
+</div>
+<ul>
+<li>Your web browser opens the search page. It shows &lsquo;Loading the search model&rsquo; for up to a minute, then the search form appears. If the browser does not open, go to <code>http://127.0.0.1:8867</code> (the black window shows the address if it differs).</li>
+<li><strong>Keep the black window open</strong> while you work. Closing it stops NSDDD.</li>
+<li>Once the form has appeared the model is ready, so every search takes only a few seconds. Keep to one browser tab: each extra tab loads its own copy of the model.</li>
+</ul>
+
+<h2>4. Your first search</h2>
+<ol>
+<li>In the topics box, write <strong>one sentence</strong> the way a policy document would say it, for example <em>&lsquo;Armed forces support civil authorities during natural disasters.&rsquo;</em> A sentence works better than a list of keywords or a question.</li>
+<li>Leave the other settings alone and press <em>Search</em>.</li>
+<li>Results are passages from the documents, best match first. Click the blue passage text to open the document at that place. For documents with an original-language version, the link opens original and English side by side.</li>
+<li>The results are grouped into numbered clusters, largest first. Hover over a cluster label to read the cluster&rsquo;s most typical sentence.</li>
+</ol>
+
+<h2>5. Useful settings</h2>
+<div class="card">
+<table>
+<tr><td><strong>Search threshold</strong></td><td>Default 0.72. Raise it to 0.75 when you need evidence (about 95% of passages at 0.75 or above are relevant). Lower it to 0.70 to explore; below 0.70 is mostly noise.</td></tr>
+<tr><td><strong>Cluster detail</strong></td><td>Higher means more, smaller clusters.</td></tr>
+<tr><td><strong>Filters</strong></td><td>Country, region, years, document type, and organisations such as NATO or the United Nations. Membership is counted as of the year each document was published, so a Finnish document from 2015 does not count as NATO. The Membership drop-down switches this to today&rsquo;s members.</td></tr>
+<tr><td><strong>AI headings</strong></td><td>Off by default. Press <em>Add AI headings</em> after a search to have a small model on your computer write a short heading for each cluster. Check each one against its example sentence.</td></tr>
+<tr><td><strong>Export</strong></td><td>Saves an Excel file (default) to the <code>outputs</code> folder, with the settings and a normalisation sheet. Links in an export work only while NSDDD is running on the same computer.</td></tr>
+<tr><td><strong>Keyword search</strong></td><td>Tick it to find an exact word, including in other languages, for example <em>Gesamtverteidigung</em>.</td></tr>
+</table>
+</div>
+
+<h2>6. Reading results carefully</h2>
+<ul>
+<li>Each passage is counted once. When both the original-language text and its English translation match, they are merged into one English result. A few original-language results can remain: these are passages whose English did not match. Untick &lsquo;Count each passage once&rsquo; (under the language setting) if you want both counted.</li>
+<li>Run three to five differently worded searches on a topic, not just one.</li>
+<li>Not finding a topic in a country&rsquo;s documents does not prove it is absent. Check which documents the country has in the dataset.</li>
+<li>Long or numerous documents, such as Japan&rsquo;s annual white papers, produce more hits. Use the normalisation sheet in the export before comparing countries.</li>
+<li>Repeated sentences from yearly editions can form a cluster of their own.</li>
+</ul>
+
+<h2>7. If something goes wrong</h2>
+<div class="card">
+<ul>
+<li><strong>The page says it cannot connect:</strong> wait 30 seconds and refresh. Make sure the black window is still open.</li>
+<li><strong>A link shows &lsquo;403&rsquo; or will not open:</strong> NSDDD must be running (black window open) on the computer that made the export. Package versions before 8 October 2026 also had a fault that blocked every link on Windows; use the latest package.</li>
+<li><strong>The computer is slow:</strong> close other programs, or use the Low Power start file (Windows).</li>
+<li><strong>Windows reports a missing DLL (VCRUNTIME140 or MSVCP140):</strong> run <code>runtime\vc_redist.x64.exe</code>, then <code>Setup.bat</code> again.</li>
+<li><strong>Setup stops with an error:</strong> send the file <code>setup_log.txt</code> (in the same folder) to the person who sent you the package. On a Mac, send a copy of the window.</li>
+<li><strong>To remove NSDDD:</strong> delete its folder.</li>
+</ul>
+</div>
+<p class="note">This guide has no screenshots yet. If a step does not match what you see, tell the person who sent you the package, so the guide can be corrected.</p>
+</main>
+</body>
+</html>
