@@ -25,19 +25,27 @@ def test_allowlist_matches_windows_and_posix_paths():
         assert not ok(bad), bad
 
 
-def test_updates_are_announced_not_applied_by_default(monkeypatch):
+def test_zip_installs_update_automatically_git_checkouts_only_announce(monkeypatch, tmp_path):
     monkeypatch.delenv('NSDDD_AUTO_UPDATE', raising=False)
-    monkeypatch.delenv('HF_HUB_OFFLINE', raising=False)
-    monkeypatch.delenv('TRANSFORMERS_OFFLINE', raising=False)
     launch = _load('launch_update_test', 'launch.py')
-    assert launch.AUTO_UPDATE_ENABLED is False
-    launch.is_git_install = lambda cwd: False
+    assert launch.AUTO_UPDATE_ENABLED is True
     launch.check_zip_update = lambda cwd: (True, '1', '2')
     launch.local_version = lambda cwd: '1'
     applied = []
     launch.apply_zip_update = lambda cwd, v: applied.append(v) or True
-    assert launch.maybe_update(ROOT, False) is False and not applied
-    assert launch.maybe_update(ROOT, False, apply=True) is True and applied == ['2']
+    launch.is_git_install = lambda cwd: False
+    assert launch.maybe_update(tmp_path, False) is True and applied == ['2']
+    assert (tmp_path / launch.UPDATE_NOTICE).exists()
+    assert launch.maybe_update(tmp_path, True) is False and applied == ['2']          # --no-update
+    launch.check_zip_update = lambda cwd: (False, '1', '')                          # offline: carry on
+    assert launch.maybe_update(tmp_path, False) is False and applied == ['2']
+    launch.check_zip_update = lambda cwd: (True, '1', '2')
+    launch.is_git_install = lambda cwd: True                                        # developer checkout: announce only
+    launch.check_git_update = lambda cwd: (True, 'aaaaaaaa', 'bbbbbbbb')
+    git_applied = []
+    launch.apply_git_update = lambda cwd: git_applied.append(1) or True
+    assert launch.maybe_update(tmp_path, False) is False and not git_applied
+    assert launch.maybe_update(tmp_path, False, apply=True) is True and git_applied == [1]
 
 
 def test_headings_from_the_windows_test_are_rejected_and_good_ones_kept():
@@ -108,3 +116,42 @@ def test_boolean_parser_quotes_and_bare_phrases():
         ast = BooleanQueryParser().parse(q)
         assert ast == AndNode(TermNode('African Union'), TermNode('peace')), q
     assert BooleanQueryParser().parse("state's") == TermNode("state's")
+
+
+def test_installer_downloads_from_the_github_release_not_datashare():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import config
+    from utils.release_source import ReleaseClient
+    assert config.DATA_SOURCE == 'github'
+    client = ReleaseClient(config.DATA_RELEASE_OWNER, config.DATA_RELEASE_REPO, config.DATA_RELEASE_TAG)
+    wanted = [v['filename'] for v in config.DOWNLOADS.values() if v.get('required') or v.get('soft')]
+    client._assets = [{'name': n, 'size': 5, 'browser_download_url': 'https://example.invalid/' + n} for n in wanted]
+    for name in wanted:
+        info = client.get_file_info(name)
+        assert info['download_url'].endswith(name) and info['size_bytes'] == 5
+    try:
+        client.get_file_info('nothing.zip')
+        assert False
+    except FileNotFoundError:
+        pass
+    assert set(wanted) == {'model_files.zip', 'encoder_model.zip', 'metadata.zip', 'label_model.zip'}
+
+
+def test_update_never_downgrades_and_compares_numerically():
+    launch = _load('launch_version_test', 'launch.py')
+    assert launch._is_newer('2026.10.12.1', '2026.10.09.1')
+    assert not launch._is_newer('2026.10.09.1', '2026.10.12.1')
+    assert not launch._is_newer('2026.10.12.1', '2026.10.12.1')
+    assert launch._is_newer('2026.10.12.10', '2026.10.12.9')
+    assert launch._is_newer('2026.10.12.1', '')
+
+
+def test_engine_still_skips_the_page_only_model_load_cell():
+    import json
+    from pathlib import Path
+    nb = json.loads((ROOT / 'document_metadata_search_voila.ipynb').read_text(encoding='utf-8'))
+    markers = ('_loading_widget', 'Initialize model (optional')
+    loaders = [c for c in nb['cells'] if c['cell_type'] == 'code' and 'initialize_model(load_encoder=not LOW_POWER)' in ''.join(c['source'])]
+    assert loaders and all(any(m in ''.join(c['source']) for m in markers) for c in loaders)

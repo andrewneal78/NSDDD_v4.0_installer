@@ -1,6 +1,6 @@
 # NSDDD v4.0 — National Security Documents Search
 
-> **Pre-release:** NSDDD 4.0 is not yet published on Edinburgh DataShare. The existing DataShare link and citation refer to 3.5 and will be replaced for final release. The standalone Windows package runs offline.
+> **Pre-release:** NSDDD 4.0 is a pre-release. The full dataset will be released on Edinburgh DataShare early in the new year, with all the new documents from 2026 plus other additions as they are found; bug fixes are published as updates until then. The installer downloads its data from this project's GitHub release (`data-4.0-pre`), not from DataShare. The DataShare link and citation below refer to 3.5 and will be replaced for the final release. The standalone Windows package runs offline. New users should start with `start_here.html`.
 
 Local semantic search across the [National Security and Defence Documents Dataset (NSDDD) v4.0](https://datashare.ed.ac.uk/handle/10283/9182): **680 national security strategy documents from 123 countries, 1987–2026**, with about 1.16 million pre-computed sentence embeddings in English and 35 original languages. You can search in English or in any of those languages, and look up exact terms in the original texts with keyword search.
 
@@ -89,7 +89,7 @@ When prompted for the install directory, press Enter to accept the default locat
 The installer will walk you through:
 
 - Setting up an isolated Python environment (nothing changed system-wide)
-- Downloading the search index and the multilingual language model (Qwen3-Embedding-0.6B) from Edinburgh DataShare (about 2.5 GB in total; nothing is downloaded from HuggingFace)
+- Downloading the search index and the multilingual language model (Qwen3-Embedding-0.6B) from the project's GitHub data release (about 2.5 GB in total; nothing is downloaded from HuggingFace or Edinburgh DataShare)
 - Installing Python dependencies
 
 **Estimated time: 20–45 minutes** depending on internet speed. Downloads can be interrupted and resumed.
@@ -130,18 +130,16 @@ is missing, the 'Add AI headings' button is switched off and clusters stay numbe
 
 ## Updates
 
-The launcher checks for a newer version each time you start, and tells you when there is one. It **does not install anything unless you ask**:
+While NSDDD 4.0 is a pre-release, bug fixes are published often. A download install (the Windows package, or a Mac install from the GitHub zip) **checks for a newer version every time you start it while online, installs it, and tells you** in the launcher window and in a green box on the search page. Offline, it starts the version you have.
 
 ```bash
-python3 launch.py --update      # install an available update, then restart
+python3 launch.py --update-only   # check and install without starting the search page (Update NSDDD.bat / Update NSDDD.command)
+python3 launch.py --no-update     # skip the check for one run
 ```
 
-- **Git installs (cloned repo):** fetches `origin/main` and fast-forwards when newer.
-- **Download/ZIP installs:** compares the local `VERSION` with GitHub's; if newer, downloads and overlays the latest installer files while preserving local data folders (`NSDDD_v4.0_workspace`, `outputs`, `.venv`, etc.).
-
-To have updates installed automatically at every start, set `NSDDD_AUTO_UPDATE=1`. To skip the check for one run, use `python3 launch.py --no-update`. The check is skipped when `HF_HUB_OFFLINE` or `TRANSFORMERS_OFFLINE` is set. The standalone Windows package never checks or updates itself.
-
----
+- **Download/ZIP installs:** compares the local `VERSION` with the one on GitHub; if newer, downloads the latest files and overlays them while preserving local data folders (`NSDDD_v4.0_workspace`, `outputs`, `.venv`, `data`, etc.). Updates replace program files only; if a release ever needs new packages or data, its notes say so.
+- **Git installs (cloned repo):** announces an update but does not pull until you run `python3 launch.py --update`.
+- Set `NSDDD_AUTO_UPDATE=0` to stop automatic installs, or `NSDDD_AUTO_UPDATE=1` to allow them in a git checkout.
 
 ## Search Interface
 
@@ -180,7 +178,7 @@ The browser-based interface provides:
 | Languages | English + translations for 80+ countries |
 | DataShare | https://datashare.ed.ac.uk/handle/10283/9182 |
 
-Document types included: national security strategies (NSS), defence white papers (WP), defence and security reviews (DD), and treaty/alignment documents (TA).
+Document types included: national security strategies (NSS), defence white papers (WP), Defence Documents (DD), and Threat Assessments (TA).
 
 ---
 

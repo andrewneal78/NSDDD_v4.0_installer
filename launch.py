@@ -9,7 +9,9 @@ NSDDD v4.0 Installer launcher.
 """
 
 import argparse
+import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -36,10 +38,13 @@ RAW_VERSION_URL = (
 )
 ZIP_URL = f"https://github.com/{REPO_OWNER}/{REPO_NAME}/archive/refs/heads/{DEFAULT_BRANCH}.zip"
 
-# Updates are checked for at start-up but only applied when you ask (`python launch.py --update`) or set NSDDD_AUTO_UPDATE=1.
-# (Until October 2026 they were applied automatically, which meant any change pushed to the repository reached every
-# installed copy without its user asking.)
-AUTO_UPDATE_ENABLED = os.environ.get("NSDDD_AUTO_UPDATE", "0") == "1"
+# Updates (pre-release, October 2026): a download-install (the Windows package, or a Mac install from the GitHub zip) checks for a
+# new version each time it starts, installs it, and tells the user (in this window and on the search page). A git checkout (a
+# developer's working copy) only announces updates; run `python launch.py --update` to pull. Set NSDDD_AUTO_UPDATE=0 to stop
+# automatic installs everywhere, or NSDDD_AUTO_UPDATE=1 to allow them in a git checkout.
+AUTO_UPDATE_SETTING = os.environ.get("NSDDD_AUTO_UPDATE", "")
+AUTO_UPDATE_ENABLED = AUTO_UPDATE_SETTING != "0"
+UPDATE_NOTICE = "update_notice.json"
 SHOW_TRACEBACKS_ENABLED = os.environ.get("NSDDD_SHOW_TRACEBACKS", "1") != "0"
 HTTP_TIMEOUT_SECONDS = 8
 
@@ -200,12 +205,19 @@ def apply_git_update(cwd: Path) -> bool:
     return False
 
 
+def _is_newer(remote: str, local: str) -> bool:
+    """True when `remote` is a later version than `local` (dotted numbers, e.g. 2026.10.12.1); never downgrades."""
+    def key(v: str):
+        return tuple(int(x) for x in re.findall(r"\d+", v or ""))
+    return key(remote) > key(local) if key(local) else bool(key(remote))
+
+
 def check_zip_update(cwd: Path) -> tuple[bool, str, str]:
     local = local_version(cwd)
     remote = fetch_text(RAW_VERSION_URL) or ""
     if not remote:
         return False, local, remote
-    return remote != local, local, remote
+    return _is_newer(remote, local), local, remote
 
 
 def remove_path(path: Path):
@@ -261,13 +273,24 @@ def apply_zip_update(cwd: Path, remote_version: str) -> bool:
         return False
 
 
-def maybe_update(cwd: Path, no_update: bool, apply: bool = False) -> bool:
-    """Check for updates; apply them only with apply=True (--update) or NSDDD_AUTO_UPDATE=1. Returns True when files were updated."""
-    apply = apply or AUTO_UPDATE_ENABLED
-    if no_update or any(os.environ.get(k, '').lower() in ('1', 'true') for k in ('HF_HUB_OFFLINE', 'TRANSFORMERS_OFFLINE')):
-        return False
+def write_update_notice(cwd: Path, before: str, after: str):
+    try:
+        (cwd / UPDATE_NOTICE).write_text(json.dumps({"from": before, "to": after}), encoding="utf-8")
+    except OSError:
+        pass
 
-    if is_git_install(cwd):
+
+def maybe_update(cwd: Path, no_update: bool, apply: bool = False) -> bool:
+    """Check for updates and install them when allowed. Returns True when files were updated.
+
+    A download-install installs an available update unless NSDDD_AUTO_UPDATE=0; a git checkout only announces it
+    unless apply=True (--update) or NSDDD_AUTO_UPDATE=1. A failed check never stops NSDDD from starting."""
+    if no_update:
+        return False
+    git = is_git_install(cwd)
+    apply = apply or (AUTO_UPDATE_ENABLED and not git) or AUTO_UPDATE_SETTING == "1"
+
+    if git:
         print("Checking for updates (git)...")
         available, local, remote = check_git_update(cwd)
         if not available:
@@ -282,21 +305,36 @@ def maybe_update(cwd: Path, no_update: bool, apply: bool = False) -> bool:
     current = local_version(cwd)
     print(f"Checking for updates (current: v{current or 'unknown'})...")
     available, local, remote = check_zip_update(cwd)
+    if not remote:
+        print("ℹ️  Could not check for updates (no internet connection?). Carrying on with this version.")
+        return False
     if not available:
         print("✓ Already up to date.")
         return False
 
     local_label = local or "(none)"
-    print(f"🔄 Update available: {local_label} -> {remote}")
+    print()
+    print("=" * 62)
+    print(f"  UPDATE AVAILABLE: {local_label} -> {remote}")
     if apply:
-        return apply_zip_update(cwd, remote)
+        print("  Installing it now. This takes a few seconds.")
+    print("=" * 62)
+    if apply:
+        if apply_zip_update(cwd, remote):
+            write_update_notice(cwd, local_label, remote)
+            print(f"  NSDDD has been updated to version {remote}.")
+            return True
+        print("  The update could not be installed. NSDDD will start with the current version.")
+        return False
     print("ℹ️  Not installed. To update, run:  python launch.py --update")
     return False
 
 
 def restart_self():
-    print("↻ Restarting launcher to use updated files...")
-    os.execv(sys.executable, [sys.executable, str(Path(__file__))] + sys.argv[1:])
+    """Run the updated launcher as a child process (os.execv on Windows would detach and end the start script early)."""
+    print("↻ Restarting with the updated files...")
+    rc = subprocess.call([sys.executable, str(Path(__file__)), "--no-update"] + [a for a in sys.argv[1:] if a not in ("--update", "--no-update")])
+    sys.exit(rc)
 
 
 def build_voila_command(py: str) -> list[str]:
@@ -398,8 +436,6 @@ def main():
     cwd = Path(__file__).parent
 
     if args.update_only:
-        for _k in ('HF_HUB_OFFLINE', 'TRANSFORMERS_OFFLINE'):
-            os.environ.pop(_k, None)
         before = local_version(cwd)
         maybe_update(cwd, False, apply=True)
         print(f"Version before: {before or 'unknown'}; now: {local_version(cwd) or 'unknown'}")

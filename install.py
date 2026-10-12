@@ -23,6 +23,10 @@ sys.path.insert(0, str(REPO_ROOT))
 from config import (
     DATASHARE_API_BASE,
     DATASHARE_HANDLE,
+    DATA_SOURCE,
+    DATA_RELEASE_OWNER,
+    DATA_RELEASE_REPO,
+    DATA_RELEASE_TAG,
     DOWNLOADS,
     DEFAULT_INSTALL_DIR,
     DISK_SPACE_REQUIRED_MIN_GB,
@@ -32,6 +36,7 @@ from config import (
     DATASET_NAME,
 )
 from utils.datashare import DataShareClient
+from utils.release_source import ReleaseClient
 from utils.download import download_file, check_disk_space, calculate_total_size
 from utils.extract import extract_with_progress
 from utils.setup import create_directory_structure, validate_installation_directory
@@ -587,14 +592,19 @@ def main():
     else:
         print('All files already installed — skipping downloads.')
 
-    # Initialise DataShare client
-    client = DataShareClient(DATASHARE_API_BASE, DATASHARE_HANDLE)
+    # Where the files come from: the project's GitHub data release (pre-release) or Edinburgh DataShare
+    if DATA_SOURCE == 'github':
+        client = ReleaseClient(DATA_RELEASE_OWNER, DATA_RELEASE_REPO, DATA_RELEASE_TAG)
+        source_name = 'the NSDDD data release on GitHub'
+    else:
+        client = DataShareClient(DATASHARE_API_BASE, DATASHARE_HANDLE)
+        source_name = 'Edinburgh DataShare'
     try:
         if to_download:
             client.list_bitstreams()
     except Exception as e:
         print()
-        print(f'Could not connect to Edinburgh DataShare: {e}')
+        print(f'Could not connect to {source_name}: {e}')
         print('Please check your internet connection and run the installer again.')
         sys.exit(1)
 
@@ -615,7 +625,7 @@ def main():
             print(f'  ✓ {filename:<45} already installed — skipping')
             continue
 
-        # Get download URL from DataShare
+        # Get the download URL
         try:
             file_info = client.get_file_info(filename)
             url = file_info['download_url']

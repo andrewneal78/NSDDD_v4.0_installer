@@ -2,19 +2,27 @@
 Configuration for NSDDD v4.0 Installation
 
 This module contains all configuration settings for downloading and installing
-the National Security Documents Dataset (NSDDD) version 4.0 from Edinburgh DataShare.
+the National Security Documents Dataset (NSDDD) version 4.0 from the project's GitHub data release (pre-release) or, from the full release, Edinburgh DataShare.
 Search model: Qwen3-Embedding-0.6B (multilingual), 256-dimension float16 index (chosen 2026-10-01 over bge-m3).
 """
 
 # DataShare API endpoints
 DATASHARE_API_BASE = 'https://datashare.ed.ac.uk/rest'
 
-# DataShare handle: still the v3.5 record; replace with the 4.0 handle when DataShare issues it
+# DataShare handle: still the v3.5 record. NOT used by the 4.0 pre-release installer (see DATA_SOURCE below);
+# replace with the 4.0 handle when the full 4.0 dataset is deposited.
 # https://datashare.ed.ac.uk/handle/10283/9182
 DATASHARE_HANDLE = '10283/9182'
 
 # Construct base URL for files
 DATASHARE_ITEM_URL = f'{DATASHARE_API_BASE}/handle/{DATASHARE_HANDLE}'
+
+# Where install.py gets its files. 'github' = assets of the data release below (pre-release, until the full 4.0 is on DataShare);
+# 'datashare' = the DataShare record above.
+DATA_SOURCE = 'github'
+DATA_RELEASE_OWNER = 'andrewneal78'
+DATA_RELEASE_REPO = 'NSDDD_v4.0_installer'
+DATA_RELEASE_TAG = 'data-4.0-pre'
 
 # Local multilingual encoder bundled via DataShare (extracted to model/qwen3-embedding-0.6b/), not fetched from HF.
 MODEL_NAME = 'Qwen/Qwen3-Embedding-0.6B'
@@ -25,8 +33,8 @@ DOWNLOADS = {
     # REQUIRED downloads (essential for semantic search)
     'model_files': {
         'filename': 'model_files.zip',
-        'size_mb': 1000.0,            # ESTIMATE until the zip is built: index 0.6 GB + texts 0.36 GB + lists
-        'size_gb': 0.98,
+        'size_mb': 715.0,
+        'size_gb': 0.70,
         'extract_to': 'model/',
         'expected_files': [
             'countries_dict.json',
@@ -48,8 +56,8 @@ DOWNLOADS = {
     },
     'encoder_model': {
         'filename': 'encoder_model.zip',
-        'size_mb': 1150.0,            # ESTIMATE until the zip is built: Qwen3-Embedding-0.6B in bfloat16
-        'size_gb': 1.12,
+        'size_mb': 1140.0,
+        'size_gb': 1.11,
         'extract_to': 'model/qwen3-embedding-0.6b/',
         'expected_files': [
             'config.json',
@@ -80,7 +88,7 @@ DOWNLOADS = {
         'size_mb': 0.014,
         'size_gb': 0.000014,
         'extract_to': 'documentation/',
-        'required': True,
+        'required': False,   # published with the full 4.0 release
         'description': 'Complete overview of v4.0 improvements and features'
     },
     'inclusion_criteria': {
@@ -88,7 +96,7 @@ DOWNLOADS = {
         'size_mb': 0.024,
         'size_gb': 0.000024,
         'extract_to': 'documentation/',
-        'required': True,
+        'required': False,   # published with the full 4.0 release
         'description': 'Document selection criteria and methodology'
     },
     'readme': {
@@ -96,7 +104,7 @@ DOWNLOADS = {
         'size_mb': 0.010,
         'size_gb': 0.000010,
         'extract_to': 'documentation/',
-        'required': True,
+        'required': False,   # published with the full 4.0 release
         'description': 'Quick start guide'
     },
     'citation': {
@@ -104,7 +112,7 @@ DOWNLOADS = {
         'size_mb': 0.004,
         'size_gb': 0.000004,
         'extract_to': 'documentation/',
-        'required': True,
+        'required': False,   # published with the full 4.0 release
         'description': 'Citation formats for research use'
     },
     'license': {
@@ -112,15 +120,15 @@ DOWNLOADS = {
         'size_mb': 0.006,
         'size_gb': 0.000006,
         'extract_to': 'documentation/',
-        'required': True,
+        'required': False,   # published with the full 4.0 release
         'description': 'CC BY 4.0 license terms'
     },
 
     # SOFT download: fetched by the installer, but a failure never stops it (clusters stay numbered instead)
     'label_model': {
         'filename': 'label_model.zip',
-        'size_mb': 485.0,             # ESTIMATE until the zip is built: Qwen3-0.6B Q4_K_M GGUF (522 MB), zipped
-        'size_gb': 0.47,
+        'size_mb': 499.0,
+        'size_gb': 0.49,
         'extract_to': 'model/label_model/',
         'expected_files': [
             'qwen3-0.6b-q4_k_m.gguf',

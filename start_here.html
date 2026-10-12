@@ -30,14 +30,24 @@ th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertic
 <h1>NSDDD 4.0: start here</h1>
 <p class="lead">Search 680 national security and defence documents from 123 countries by meaning, in English and in the original languages. It runs on your own computer; nothing you search for leaves it. This is a pre-release build: documents and figures may change before the public release.</p>
 
+<div class="note">
+<strong>This is a pre-release version.</strong>
+<ul>
+<li>The full NSDDD 4.0 dataset will be released early in the new year. It will include all the new documents from 2026, plus other additions as they are found.</li>
+<li>Until then, this pre-release is updated as bugs are found and fixed. Updates install themselves when you start NSDDD while online, and tell you when they have (see section 7).</li>
+<li>Documents, figures and results may change between now and the full release, so please do not cite pre-release figures as final.</li>
+<li>Tell the person who sent you this page if anything looks wrong. That is how the bugs get found.</li>
+</ul>
+</div>
+
 <h2>1. Before you start</h2>
 <div class="card">
 <table>
 <tr><th></th><th>Minimum</th><th>Better</th></tr>
 <tr><td>Memory</td><td>8 GB</td><td>16 GB</td></tr>
 <tr><td>Free disk space</td><td>10 GB (plus 3 GB for the download, which you can delete afterwards)</td><td>15 GB</td></tr>
-<tr><td>Computer</td><td>Windows 10 or 11 (64-bit), (a Mac version is available on request)</td><td>Any recent laptop</td></tr>
-<tr><td>Internet</td><td colspan="2">Only to download the package (about 3 GB) and for updates.</td></tr>
+<tr><td>Computer</td><td>Windows 10 or 11 (64-bit), or a Mac (Apple silicon or Intel) with macOS 12 or later</td><td>Any recent laptop</td></tr>
+<tr><td>Internet</td><td colspan="2">Windows: only to download the package (about 3 GB) and for updates. Mac: during the install (about 2.5 GB).</td></tr>
 </table>
 </div>
 
@@ -56,14 +66,19 @@ th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertic
 </div>
 <div class="card">
 <strong>Mac</strong>
-<p>The Mac version is not ready for general release yet. Ask the person who sent you this page and they will send you the Mac installer and instructions.</p>
+<ol>
+<li>Download <a href="https://github.com/andrewneal78/NSDDD_v4.0_installer/archive/refs/heads/main.zip">the installer (a small zip file)</a> and unzip it. Move the folder somewhere permanent, for example your home folder.</li>
+<li>Control-click <code>Install NSDDD.command</code>, choose <em>Open</em>, then <em>Open</em> again (only the first time).</li>
+<li>Leave the window open. It needs no Python of its own and takes 20 to 45 minutes, mostly downloading about 2.5 GB of data from GitHub. You need to be online.</li>
+<li>When it says &lsquo;Done&rsquo;, you can close it. Do not move the folder afterwards.</li>
+</ol>
 </div>
 </div>
 
 <h2>3. Start a search session</h2>
 <div class="two">
 <div class="card"><strong>Windows:</strong> double-click <code>Start NSDDD.bat</code>. Use <code>Start NSDDD Low Power.bat</code> on a slow computer.</div>
-<div class="card"><strong>Mac:</strong> see the Mac instructions you were sent.</div>
+<div class="card"><strong>Mac:</strong> double-click <code>Launch.command</code>.</div>
 </div>
 <ul>
 <li>Your web browser opens the search page. It shows &lsquo;Loading the search model&rsquo; for up to a minute, then the search form appears. If the browser does not open, go to <code>http://127.0.0.1:8867</code> (the black window shows the address if it differs).</li>
@@ -101,7 +116,7 @@ th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertic
 </ul>
 
 <h2>7. Updates</h2>
-<p>NSDDD is a pre-release and is improved from time to time. To get the latest version, close NSDDD and double-click <code>Update NSDDD.bat</code> (Windows; internet needed). It replaces only the program files. Your exports are not touched. Nothing updates unless you ask.</p>
+<p>NSDDD is a pre-release and is improved as bugs are found. Each time you start it while you are online, it checks for a new version and installs it, then tells you in the black window and in a green box on the search page. If you are offline it simply starts the version you have. To check without starting a search, double-click <code>Update NSDDD.bat</code> (Windows) or <code>Update NSDDD.command</code> (Mac). Only the program files are replaced; your exports are not touched.</p>
 
 <h2>8. If something goes wrong</h2>
 <div class="card">
