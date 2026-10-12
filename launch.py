@@ -141,9 +141,25 @@ def choose_port(preferred=8867):
         return sock.getsockname()[1]
 
 
+def _open_url(url, timeout):
+    """urlopen that also works when the system certificate store lacks GitHub's root (a fresh Windows install
+    or virtual machine): tries the system store first, then the certifi bundle that Setup installs."""
+    import ssl
+    try:
+        return urllib.request.urlopen(url, timeout=timeout)
+    except urllib.error.URLError as e:
+        if not isinstance(getattr(e, "reason", None), ssl.SSLError):
+            raise
+        try:
+            import certifi
+        except ImportError:
+            raise e
+        return urllib.request.urlopen(url, timeout=timeout, context=ssl.create_default_context(cafile=certifi.where()))
+
+
 def fetch_text(url: str) -> str | None:
     try:
-        with urllib.request.urlopen(url, timeout=HTTP_TIMEOUT_SECONDS) as resp:
+        with _open_url(url, HTTP_TIMEOUT_SECONDS) as resp:
             return resp.read().decode("utf-8").strip()
     except Exception:
         return None
@@ -249,7 +265,7 @@ def apply_zip_update(cwd: Path, remote_version: str) -> bool:
             tmp = Path(td)
             zip_path = tmp / "update.zip"
 
-            with urllib.request.urlopen(ZIP_URL, timeout=HTTP_TIMEOUT_SECONDS) as resp:
+            with _open_url(ZIP_URL, HTTP_TIMEOUT_SECONDS) as resp:
                 zip_path.write_bytes(resp.read())
 
             extract_dir = tmp / "extract"
