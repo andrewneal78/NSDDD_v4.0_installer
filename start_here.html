@@ -45,9 +45,9 @@ th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertic
 <table>
 <tr><th></th><th>Minimum</th><th>Better</th></tr>
 <tr><td>Memory</td><td>8 GB</td><td>16 GB</td></tr>
-<tr><td>Free disk space</td><td>10 GB (plus 3 GB for the download, which you can delete afterwards)</td><td>15 GB</td></tr>
+<tr><td>Free disk space</td><td>10 GB (plus 1 GB for the download, which you can delete afterwards)</td><td>15 GB</td></tr>
 <tr><td>Computer</td><td>Windows 10 or 11 (64-bit), or a Mac (Apple silicon or Intel) with macOS 12 or later</td><td>Any recent laptop</td></tr>
-<tr><td>Internet</td><td colspan="2">Windows: only to download the package (about 3 GB) and for updates. Mac: during the install (about 2.5 GB).</td></tr>
+<tr><td>Internet</td><td colspan="2">Windows: to download the package (about 1 GB), during set-up (about 2.5 GB more) and for updates. Mac: during the install (about 2.5 GB).</td></tr>
 </table>
 </div>
 
@@ -56,12 +56,11 @@ th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertic
 <div class="card">
 <strong>Windows</strong>
 <ol>
-<li>Open the <a href="https://github.com/andrewneal78/NSDDD_v4.0_installer/releases">download page</a> and download <strong>both</strong> files whose names start <code>NSDDD_4.0_Windows.zip.part</code> (about 3 GB in total) into one folder, for example your Downloads folder.</li>
-<li>Click the address bar of that folder in File Explorer, type <code>cmd</code> and press Enter. In the black window that opens, paste this line and press Enter:<br><code>copy /b NSDDD_4.0_Windows.zip.part-aa + NSDDD_4.0_Windows.zip.part-ab NSDDD_4.0_Windows.zip</code></li>
+<li>Open the <a href="https://github.com/andrewneal78/NSDDD_v4.0_installer/releases">download page</a> and download <code>NSDDD_4.0_Windows.zip</code> (about 1 GB), for example into your Downloads folder.</li>
 <li>Unzip <code>NSDDD_4.0_Windows.zip</code> into a <em>short</em> folder on your main drive, for example <code>C:\NSDDD</code>. Avoid OneDrive, Desktop and long folder names.</li>
 <li>Double-click <code>Setup.bat</code>. If Windows says &lsquo;Windows protected your PC&rsquo;, click <em>More info</em>, then <em>Run anyway</em>.</li>
 <li>If it asks permission to install the Microsoft Visual C++ runtime, say yes. If your computer does not allow it, ask IT support to run <code>runtime\vc_redist.x64.exe</code>.</li>
-<li>Wait 5 to 10 minutes for &lsquo;Setup complete&rsquo;. No internet is needed after the download.</li>
+<li>Wait 10 to 20 minutes for &lsquo;Setup complete&rsquo;. Setup downloads the search data (about 2.5 GB), so it needs the internet; if the connection drops, run it again and it carries on where it stopped.</li>
 </ol>
 </div>
 <div class="card">
