@@ -246,17 +246,42 @@ def remove_path(path: Path):
 
 
 def overlay_tree(src: Path, dst: Path):
-    for item in src.iterdir():
-        if item.name in PRESERVE_TOP_LEVEL:
-            continue
-        target = dst / item.name
-        if item.is_dir():
-            if target.exists() and not target.is_dir():
-                remove_path(target)
-            shutil.copytree(item, target, dirs_exist_ok=True)
-        else:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(item, target)
+    """Copy src over dst (except the preserved folders). If any copy fails, every file already replaced is put back,
+    so a failed update never leaves a mix of old and new program files."""
+    backup = Path(tempfile.mkdtemp(prefix="nsddd_backup_"))
+    saved: list[tuple[Path, Path]] = []
+    created: list[Path] = []
+    try:
+        for item in src.iterdir():
+            if item.name in PRESERVE_TOP_LEVEL:
+                continue
+            if item.is_dir():
+                if (dst / item.name).exists() and not (dst / item.name).is_dir():
+                    remove_path(dst / item.name)
+                files = [(f, f.relative_to(src)) for f in item.rglob("*") if f.is_file()]
+            else:
+                files = [(item, Path(item.name))]
+            for f, rel in files:
+                target = dst / rel
+                if target.is_dir():
+                    remove_path(target)
+                if target.exists():
+                    kept = backup / rel
+                    kept.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(target, kept)
+                    saved.append((target, kept))
+                else:
+                    created.append(target)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(f, target)
+    except Exception:
+        for target in created:
+            target.unlink(missing_ok=True)
+        for target, kept in saved:
+            shutil.copy2(kept, target)
+        raise
+    finally:
+        shutil.rmtree(backup, ignore_errors=True)
 
 
 def apply_zip_update(cwd: Path, remote_version: str) -> bool:
@@ -265,8 +290,16 @@ def apply_zip_update(cwd: Path, remote_version: str) -> bool:
             tmp = Path(td)
             zip_path = tmp / "update.zip"
 
-            with _open_url(ZIP_URL, HTTP_TIMEOUT_SECONDS) as resp:
-                zip_path.write_bytes(resp.read())
+            with _open_url(ZIP_URL, HTTP_TIMEOUT_SECONDS) as resp, open(zip_path, "wb") as out:
+                last = time.time()
+                while True:
+                    block = resp.read(1 << 20)
+                    if not block:
+                        break
+                    out.write(block)
+                    if time.time() - last > 5:
+                        print(f"  ...downloading ({zip_path.stat().st_size / 1e6:,.0f} MB so far)", flush=True)
+                        last = time.time()
 
             extract_dir = tmp / "extract"
             extract_dir.mkdir(parents=True, exist_ok=True)
@@ -294,6 +327,54 @@ def write_update_notice(cwd: Path, before: str, after: str):
         (cwd / UPDATE_NOTICE).write_text(json.dumps({"from": before, "to": after}), encoding="utf-8")
     except OSError:
         pass
+
+
+def write_data_notice(cwd: Path, version: str, notes: str):
+    """Add the data update to update_notice.json (shown once on the search page)."""
+    path = cwd / UPDATE_NOTICE
+    try:
+        info = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except Exception:
+        info = {}
+    info["data"] = {"version": version, "notes": notes}
+    try:
+        path.write_text(json.dumps(info), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def maybe_update_data(cwd: Path, apply: bool = True) -> bool:
+    """Download new documents and other data changes published on the data release. Returns True when installed.
+
+    A failed or offline check never stops NSDDD from starting. NSDDD_AUTO_DATA_UPDATE=0 only announces."""
+    try:
+        import data_update
+        manifest = data_update.fetch_manifest()
+        if not manifest:
+            return False
+        changed, local = data_update.pending(cwd, manifest)
+        if not changed:
+            return False
+        size_mb = sum(int(manifest["files"][n].get("size", 0)) for n in changed) / 1e6
+        print()
+        print("=" * 62)
+        print(f"  NEW DATA AVAILABLE: {local} -> {manifest['data_version']}")
+        if manifest.get("notes"):
+            print(f"  {manifest['notes']}")
+        if apply:
+            print(f"  Downloading it now (about {size_mb:,.0f} MB). Keep this window open.")
+        print("=" * 62)
+        if not apply or os.environ.get("NSDDD_AUTO_DATA_UPDATE") == "0":
+            print("ℹ️  Not installed. To update, run:  python launch.py --update")
+            return False
+        if data_update.apply(cwd, manifest, changed):
+            write_data_notice(cwd, manifest["data_version"], manifest.get("notes", ""))
+            print(f"  The data has been updated to version {manifest['data_version']}.")
+            return True
+        print("  The data update could not be installed. NSDDD will start with the current data.")
+    except Exception as e:
+        print(f"ℹ️  Data update check failed ({e}). Carrying on with the current data.")
+    return False
 
 
 def maybe_update(cwd: Path, no_update: bool, apply: bool = False) -> bool:
@@ -333,7 +414,7 @@ def maybe_update(cwd: Path, no_update: bool, apply: bool = False) -> bool:
     print("=" * 62)
     print(f"  UPDATE AVAILABLE: {local_label} -> {remote}")
     if apply:
-        print("  Installing it now. This takes a few seconds.")
+        print("  Installing it now. Keep this window open.")
     print("=" * 62)
     if apply:
         if apply_zip_update(cwd, remote):
@@ -446,6 +527,7 @@ def main():
     parser.add_argument("--detach", action="store_true", help="Start in background, open browser, then exit")
     parser.add_argument("--no-update", action="store_true", help="Skip update check on this run")
     parser.add_argument("--update", action="store_true", help="Install an available update (updates are otherwise only announced)")
+    parser.add_argument("--no-data-update", action="store_true", help="Skip the check for new data on this run")
     parser.add_argument("--update-only", action="store_true", help="Check for and install an update, then exit without starting the app")
     args = parser.parse_args()
 
@@ -454,11 +536,14 @@ def main():
     if args.update_only:
         before = local_version(cwd)
         maybe_update(cwd, False, apply=True)
+        maybe_update_data(cwd, apply=True)
         print(f"Version before: {before or 'unknown'}; now: {local_version(cwd) or 'unknown'}")
         return
 
     if maybe_update(cwd, args.no_update, apply=args.update):
         restart_self()
+    if not args.no_data_update:
+        maybe_update_data(cwd, apply=args.update or (AUTO_UPDATE_ENABLED and not is_git_install(cwd)) or AUTO_UPDATE_SETTING == "1")
 
     if args.no_update:
         os.environ['NSDDD_AUTO_UPDATE'] = '0'

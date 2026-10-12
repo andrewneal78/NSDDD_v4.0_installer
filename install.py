@@ -718,6 +718,11 @@ def main():
 
     # Write config and make launcher executable
     _write_install_config(install_dir, venv_py)
+    try:
+        import data_update
+        data_update.record_current(install_dir)      # which data version this copy holds, for later data updates
+    except Exception:
+        pass
     _make_launcher_executable()
 
     print()

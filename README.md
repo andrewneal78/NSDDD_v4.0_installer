@@ -130,6 +130,8 @@ is missing, the 'Add AI headings' button is switched off and clusters stay numbe
 
 ## Updates
 
+**New documents and data** are delivered as a *data version* on the `data-4.0-pre` GitHub release. At start-up (and in `--update-only`) the launcher compares it with the installed data and downloads only the zips that changed, checks their SHA-256, and swaps them in only when all are complete; `NSDDD_AUTO_DATA_UPDATE=0` announces without installing, and `--no-data-update` skips the check for one run. The editor publishes a version with `python publish_data_release.py` (see its docstring); the code-side `document_metadata_4.0.csv` and `VERSION` are published in the usual way.
+
 While NSDDD 4.0 is a pre-release, bug fixes are published often. A download install (the Windows package, or a Mac install from the GitHub zip) **checks for a newer version every time you start it while online, installs it, and tells you** in the launcher window and in a green box on the search page. Offline, it starts the version you have.
 
 ```bash
