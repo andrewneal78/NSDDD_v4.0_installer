@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.13.4",
+    "date": "2026-10-13",
+    "changes": [
+      "The README now points to the NSDDD 4.0 topic-search guide, and the Windows package includes the guide in its app folder."
+    ]
+  },
+  {
     "version": "2026.10.13.3",
     "date": "2026-10-13",
     "changes": [
