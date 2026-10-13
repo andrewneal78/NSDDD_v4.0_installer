@@ -145,6 +145,7 @@ documentation/
 
 # Model files (large, should not be committed)
 *.json
+!CHANGELOG.json
 
 # Temporary files
 *.tmp

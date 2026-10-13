@@ -1,0 +1,36 @@
+[
+  {
+    "version": "2026.10.13.1",
+    "date": "2026-10-13",
+    "changes": [
+      "The green update box on the search page now lists what changed: the program changes, and any documents, countries or corrections added by a data update."
+    ]
+  },
+  {
+    "version": "2026.10.12.2",
+    "date": "2026-10-12",
+    "changes": [
+      "New documents and data corrections now arrive as data updates when you start NSDDD while online (only the files that changed are downloaded).",
+      "A program update that fails part-way now restores the old files instead of leaving a mixture.",
+      "Downloads work on a fresh Windows computer whose certificate store lacks GitHub's certificate."
+    ]
+  },
+  {
+    "version": "2026.10.12.1",
+    "date": "2026-10-12",
+    "changes": [
+      "Boolean search accepts quoted phrases such as 'African Union' AND 'peace', and bare words next to each other count as a phrase.",
+      "Program updates install automatically at start-up and tell you when they have.",
+      "The search model loads when the page opens, so the first search is as quick as later ones.",
+      "The search page explains that this is a pre-release version.",
+      "Windows set-up now downloads the data from the GitHub data release (the package is about 0.4 GB)."
+    ]
+  },
+  {
+    "version": "2026.10.09.1",
+    "date": "2026-10-09",
+    "changes": [
+      "Fixes to links to documents and exports (403 errors), passages counted twice, and the Windows set-up checks."
+    ]
+  }
+]
