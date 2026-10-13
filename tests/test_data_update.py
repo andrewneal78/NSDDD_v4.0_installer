@@ -121,3 +121,62 @@ def test_failed_overlay_restores_the_old_program_files(tmp_path, monkeypatch):
     monkeypatch.setattr(launch.shutil, 'copy2', real)
     launch.overlay_tree(src, dst)
     assert (dst / 'a.py').read_text() == 'new a' and (dst / 'sub' / 'b.py').read_text() == 'new b'
+
+
+def _notice_function(monkeypatch, cwd):
+    """The notebook's own _updated_notice_html, run against a folder."""
+    import ast
+    from html import escape
+    nb = json.loads((Path(__file__).resolve().parents[1] / 'document_metadata_search_voila.ipynb').read_text(encoding='utf-8'))
+    src = ''.join(nb['cells'][1]['source']).replace('%%capture', '', 1)
+    wanted = {'_version_key', '_changes_between', '_updated_notice_html'}
+    fns = [n for n in ast.parse(src).body if isinstance(n, ast.FunctionDef) and n.name in wanted]
+    ns = {'json': json, 'Path': Path, 'escape': escape}
+    exec(compile(ast.Module(fns, []), 'notice', 'exec'), ns)
+    monkeypatch.chdir(cwd)
+    return ns['_updated_notice_html']
+
+
+def test_changelog_is_current_and_valid():
+    root = Path(__file__).resolve().parents[1]
+    entries = json.loads((root / 'CHANGELOG.json').read_text(encoding='utf-8'))
+    assert entries[0]['version'] == (root / 'VERSION').read_text().strip(), 'add a CHANGELOG.json entry for every VERSION bump'
+    assert all(e['changes'] for e in entries)
+
+
+def test_update_box_lists_code_changes_and_new_documents(tmp_path, monkeypatch):
+    (tmp_path / 'CHANGELOG.json').write_text(json.dumps([
+        {'version': '2026.11.01.1', 'date': '2026-11-01', 'changes': ['Newest fix']},
+        {'version': '2026.10.20.1', 'date': '2026-10-20', 'changes': ['Middle fix <b>']},
+        {'version': '2026.10.01.1', 'date': '2026-10-01', 'changes': ['Old fix already installed']}]))
+    (tmp_path / 'update_notice.json').write_text(json.dumps({
+        'from': '2026.10.01.1', 'to': '2026.11.01.1',
+        'data': {'version': '2026.11.01.2', 'notes': 'Added 2026 documents.',
+                 'documents_added': [{'id': '700', 'title': 'Cabo Verde National Defence Strategy 2026', 'type': 'NSS', 'year': '2026'}],
+                 'documents_removed': [], 'countries_added': ['Cabo Verde']}}))
+    html = _notice_function(monkeypatch, tmp_path)()
+    assert 'Newest fix' in html and 'Middle fix &lt;b&gt;' in html and 'Old fix already installed' not in html
+    assert '1 new document' in html and 'Cabo Verde National Defence Strategy 2026' in html and 'New countries:</strong> Cabo Verde' in html
+    assert not (tmp_path / 'update_notice.json').exists()          # shown once
+    assert _notice_function(monkeypatch, tmp_path)() == ''
+
+
+def test_data_only_correction_is_described(tmp_path, monkeypatch):
+    (tmp_path / 'update_notice.json').write_text(json.dumps({'data': {'version': '2026.11.01.2', 'notes': 'Fixed years.'}}))
+    html = _notice_function(monkeypatch, tmp_path)()
+    assert 'no documents were added or removed' in html and 'Program' not in html
+
+
+def test_apply_reports_added_documents(world):
+    app, data, web = world
+    (data / 'model' / 'documents_dict.json').write_text(json.dumps({'1': {'name': '1 Albania Strategy 2004', 'type': 'NSS', 'year': '2004'}}))
+    (data / 'model' / 'countries_dict.json').write_text(json.dumps({'ALB': {'country': 'Albania'}}))
+    publish(web, '2099.01.01.1', {'model_files.zip': {
+        'segments.sqlite': 'x',
+        'documents_dict.json': json.dumps({'1': {'name': '1 Albania Strategy 2004', 'type': 'NSS', 'year': '2004'},
+                                           '2': {'name': '2 Niue Defence Policy 2026', 'type': 'DD', 'year': '2026'}}),
+        'countries_dict.json': json.dumps({'ALB': {'country': 'Albania'}, 'NIU': {'country': 'Niue'}})}})
+    manifest = du.fetch_manifest()
+    result = du.apply(app, manifest, ['model_files.zip'], log=lambda *_: None)
+    assert result['documents_added'] == [{'id': '2', 'title': 'Niue Defence Policy 2026', 'type': 'DD', 'year': '2026'}]
+    assert result['countries_added'] == ['Niue'] and result['version'] == '2099.01.01.1'

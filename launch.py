@@ -323,20 +323,21 @@ def apply_zip_update(cwd: Path, remote_version: str) -> bool:
 
 
 def write_update_notice(cwd: Path, before: str, after: str):
+    """Record a code update for the green box on the search page (shown once; the page reads CHANGELOG.json for what changed)."""
     try:
         (cwd / UPDATE_NOTICE).write_text(json.dumps({"from": before, "to": after}), encoding="utf-8")
     except OSError:
         pass
 
 
-def write_data_notice(cwd: Path, version: str, notes: str):
+def write_data_notice(cwd: Path, version: str, notes: str, changes: dict | None = None):
     """Add the data update to update_notice.json (shown once on the search page)."""
     path = cwd / UPDATE_NOTICE
     try:
         info = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     except Exception:
         info = {}
-    info["data"] = {"version": version, "notes": notes}
+    info["data"] = dict(changes or {}, version=version, notes=notes)
     try:
         path.write_text(json.dumps(info), encoding="utf-8")
     except OSError:
@@ -367,8 +368,11 @@ def maybe_update_data(cwd: Path, apply: bool = True) -> bool:
         if not apply or os.environ.get("NSDDD_AUTO_DATA_UPDATE") == "0":
             print("ℹ️  Not installed. To update, run:  python launch.py --update")
             return False
-        if data_update.apply(cwd, manifest, changed):
-            write_data_notice(cwd, manifest["data_version"], manifest.get("notes", ""))
+        result = data_update.apply(cwd, manifest, changed)
+        if result:
+            write_data_notice(cwd, manifest["data_version"], manifest.get("notes", ""), result)
+            if result.get("documents_added"):
+                print(f"  {len(result['documents_added'])} new document(s) added.")
             print(f"  The data has been updated to version {manifest['data_version']}.")
             return True
         print("  The data update could not be installed. NSDDD will start with the current data.")

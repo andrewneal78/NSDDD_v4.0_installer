@@ -186,9 +186,44 @@ def _swap_in(stage, target, mode):
     shutil.rmtree(old, ignore_errors=True)
 
 
+def _catalogue(data_dir):
+    """(documents, countries) from the installed index, or None when unreadable."""
+    try:
+        model = Path(data_dir) / 'model'
+        return (json.loads((model / 'documents_dict.json').read_text(encoding='utf-8')),
+                json.loads((model / 'countries_dict.json').read_text(encoding='utf-8')))
+    except Exception:
+        return None
+
+
+def _title(doc_id, info):
+    name = str(info.get('name') or doc_id)
+    return name[len(doc_id) + 1:] if name.startswith(str(doc_id) + ' ') else name
+
+
+def describe_changes(before, after):
+    """What a data update added or removed, from the catalogues before and after (None when either is unknown)."""
+    if not before or not after:
+        return {}
+    docs0, ctry0 = before
+    docs1, ctry1 = after
+    def label(i):
+        d = docs1[i]
+        return {'id': i, 'title': _title(i, d), 'type': d.get('type', ''), 'year': str(d.get('year', ''))}
+    added = sorted((i for i in docs1 if i not in docs0), key=lambda i: (len(str(i)), str(i)))
+    removed = sorted((i for i in docs0 if i not in docs1), key=lambda i: (len(str(i)), str(i)))
+    def cname(c, k):
+        v = c.get(k)
+        return (v.get('country') or v.get('short_name') or k) if isinstance(v, dict) else (v or k)
+    return {'documents_added': [label(i) for i in added],
+            'documents_removed': [{'id': i, 'title': _title(i, docs0[i])} for i in removed],
+            'countries_added': sorted(cname(ctry1, k) for k in ctry1 if k not in ctry0)}
+
+
 def apply(app_dir, manifest, changed, log=print):
-    """Download, check, unpack, then swap in the changed zips. Returns True on success; installed files are
-    untouched when anything fails before the final swap."""
+    """Download, check, unpack, then swap in the changed zips. Returns a dict (version, plus the documents and
+    countries added or removed) on success, or False. Installed files are untouched when anything fails before the
+    final swap."""
     data_dir, xhr_dir = locate(app_dir)
     if data_dir is None or not changed:
         return False
@@ -201,6 +236,7 @@ def apply(app_dir, manifest, changed, log=print):
     shutil.rmtree(tmp / 'stage', ignore_errors=True)
     tmp.mkdir(parents=True, exist_ok=True)
     stages = []
+    before = _catalogue(data_dir)
     try:
         for i, name in enumerate(changed, 1):
             info = manifest['files'][name]
@@ -221,7 +257,7 @@ def apply(app_dir, manifest, changed, log=print):
         version, have = read_state(data_dir)
         have.update(done)
         write_state(data_dir, manifest['data_version'], have, manifest.get('notes', ''))
-        return True
+        return dict(describe_changes(before, _catalogue(data_dir)), version=manifest['data_version'])
     except Exception as e:
         log(f'  The data update did not finish ({e}); the data is unchanged or was restored.')
         return False
