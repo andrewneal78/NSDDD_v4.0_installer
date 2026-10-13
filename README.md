@@ -140,8 +140,8 @@ python3 launch.py --no-update     # skip the check for one run
 ```
 
 - **Download/ZIP installs:** compares the local `VERSION` with the one on GitHub; if newer, downloads the latest files and overlays them while preserving local data folders (`NSDDD_v4.0_workspace`, `outputs`, `.venv`, `data`, etc.). Updates replace program files only; if a release ever needs new packages or data, its notes say so.
-- **Git installs (cloned repo):** announces an update but does not pull until you run `python3 launch.py --update`.
-- Set `NSDDD_AUTO_UPDATE=0` to stop automatic installs, or `NSDDD_AUTO_UPDATE=1` to allow them in a git checkout.
+- **Git installs (cloned repo):** also update themselves at start-up (a fast-forward `git pull`), but only while no tracked file has local changes and your checkout is not ahead of origin. A checkout with edits only announces the update; run `python3 launch.py --update` to pull it yourself.
+- Set `NSDDD_AUTO_UPDATE=0` to stop all automatic installs (program and data), or `NSDDD_AUTO_UPDATE=1` to force them in a git checkout that has local changes.
 
 ## Search Interface
 

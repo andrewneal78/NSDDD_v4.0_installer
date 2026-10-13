@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.13.2",
+    "date": "2026-10-13",
+    "changes": [
+      "Every launcher now installs updates and new data by itself at start-up, including a copy cloned with git (provided you have not edited its files). Before, a git copy only announced them."
+    ]
+  },
+  {
     "version": "2026.10.13.1",
     "date": "2026-10-13",
     "changes": [

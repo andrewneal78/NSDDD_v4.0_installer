@@ -189,6 +189,12 @@ def git_rev(cwd: Path, ref: str) -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
+def git_is_clean(cwd: Path) -> bool:
+    """True when no tracked file has local changes, so a fast-forward pull cannot disturb anyone's work."""
+    r = subprocess.run(["git", "-C", str(cwd), "status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True)
+    return r.returncode == 0 and not r.stdout.strip()
+
+
 def check_git_update(cwd: Path) -> tuple[bool, str, str]:
     fetch = subprocess.run(
         ["git", "-C", str(cwd), "fetch", "origin", DEFAULT_BRANCH],
@@ -202,7 +208,11 @@ def check_git_update(cwd: Path) -> tuple[bool, str, str]:
     remote = git_rev(cwd, f"origin/{DEFAULT_BRANCH}")
     if not local or not remote:
         return False, local, remote
-    return local != remote, local, remote
+    if local == remote:
+        return False, local, remote
+    # Local commits that are ahead of origin (a developer's checkout) are not an update.
+    ahead = subprocess.run(["git", "-C", str(cwd), "merge-base", "--is-ancestor", remote, local], capture_output=True)
+    return ahead.returncode != 0, local, remote
 
 
 def apply_git_update(cwd: Path) -> bool:
@@ -365,8 +375,8 @@ def maybe_update_data(cwd: Path, apply: bool = True) -> bool:
         if apply:
             print(f"  Downloading it now (about {size_mb:,.0f} MB). Keep this window open.")
         print("=" * 62)
-        if not apply or os.environ.get("NSDDD_AUTO_DATA_UPDATE") == "0":
-            print("ℹ️  Not installed. To update, run:  python launch.py --update")
+        if not apply or os.environ.get("NSDDD_AUTO_DATA_UPDATE") == "0" or not AUTO_UPDATE_ENABLED:
+            print("ℹ️  Not installed (automatic updates are switched off). To update, run:  python launch.py --update-only")
             return False
         result = data_update.apply(cwd, manifest, changed)
         if result:
@@ -389,7 +399,9 @@ def maybe_update(cwd: Path, no_update: bool, apply: bool = False) -> bool:
     if no_update:
         return False
     git = is_git_install(cwd)
-    apply = apply or (AUTO_UPDATE_ENABLED and not git) or AUTO_UPDATE_SETTING == "1"
+    # Every install updates itself at start-up. A git checkout does so only while it has no local changes to tracked
+    # files (a pull could then never disturb anyone's work); a checkout with edits only announces the update.
+    apply = apply or (AUTO_UPDATE_ENABLED and (not git or git_is_clean(cwd))) or AUTO_UPDATE_SETTING == "1"
 
     if git:
         print("Checking for updates (git)...")
@@ -547,7 +559,7 @@ def main():
     if maybe_update(cwd, args.no_update, apply=args.update):
         restart_self()
     if not args.no_data_update:
-        maybe_update_data(cwd, apply=args.update or (AUTO_UPDATE_ENABLED and not is_git_install(cwd)) or AUTO_UPDATE_SETTING == "1")
+        maybe_update_data(cwd, apply=True)       # data lives outside git, so it is always safe to update
 
     if args.no_update:
         os.environ['NSDDD_AUTO_UPDATE'] = '0'

@@ -25,7 +25,7 @@ def test_allowlist_matches_windows_and_posix_paths():
         assert not ok(bad), bad
 
 
-def test_zip_installs_update_automatically_git_checkouts_only_announce(monkeypatch, tmp_path):
+def test_every_install_updates_automatically_a_git_checkout_only_when_it_has_no_local_changes(monkeypatch, tmp_path):
     monkeypatch.delenv('NSDDD_AUTO_UPDATE', raising=False)
     launch = _load('launch_update_test', 'launch.py')
     assert launch.AUTO_UPDATE_ENABLED is True
@@ -40,12 +40,34 @@ def test_zip_installs_update_automatically_git_checkouts_only_announce(monkeypat
     launch.check_zip_update = lambda cwd: (False, '1', '')                          # offline: carry on
     assert launch.maybe_update(tmp_path, False) is False and applied == ['2']
     launch.check_zip_update = lambda cwd: (True, '1', '2')
-    launch.is_git_install = lambda cwd: True                                        # developer checkout: announce only
+    launch.is_git_install = lambda cwd: True
     launch.check_git_update = lambda cwd: (True, 'aaaaaaaa', 'bbbbbbbb')
     git_applied = []
     launch.apply_git_update = lambda cwd: git_applied.append(1) or True
+    launch.git_is_clean = lambda cwd: False                                         # developer checkout with edits: announce only
     assert launch.maybe_update(tmp_path, False) is False and not git_applied
     assert launch.maybe_update(tmp_path, False, apply=True) is True and git_applied == [1]
+    git_applied.clear()
+    launch.git_is_clean = lambda cwd: True                                          # a clean checkout updates itself
+    assert launch.maybe_update(tmp_path, False) is True and git_applied == [1]
+
+
+def test_git_checkout_ahead_of_origin_is_not_an_update(tmp_path):
+    import subprocess
+    launch = _load('launch_git_test', 'launch.py')
+    def git(cwd, *a):
+        return subprocess.run(['git', '-C', str(cwd), '-c', 'user.name=t', '-c', 'user.email=t@t', *a], capture_output=True, text=True, check=True)
+    origin, clone = tmp_path / 'origin', tmp_path / 'clone'
+    subprocess.run(['git', 'init', '-q', '-b', launch.DEFAULT_BRANCH, str(origin)], check=True)
+    (origin / 'a.txt').write_text('1')
+    git(origin, 'add', '-A'); git(origin, 'commit', '-qm', 'one')
+    subprocess.run(['git', 'clone', '-q', str(origin), str(clone)], check=True)
+    assert launch.check_git_update(clone)[0] is False and launch.git_is_clean(clone)
+    (clone / 'a.txt').write_text('2'); git(clone, 'commit', '-qam', 'local work')            # ahead of origin
+    assert launch.check_git_update(clone)[0] is False
+    (origin / 'a.txt').write_text('3'); git(origin, 'commit', '-qam', 'upstream')            # now diverged/behind
+    assert launch.check_git_update(clone)[0] is True
+    (clone / 'a.txt').write_text('edited'); assert launch.git_is_clean(clone) is False
 
 
 def test_headings_from_the_windows_test_are_rejected_and_good_ones_kept():
