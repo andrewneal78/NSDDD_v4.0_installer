@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.13.3",
+    "date": "2026-10-13",
+    "changes": [
+      "Added the NSDDD 4.0 topic-search guide (NSDDD_Topic_Search_guide_v4.0.pdf): search settings, keyword and Boolean search, clustering and using NSDDD with an AI assistant."
+    ]
+  },
+  {
     "version": "2026.10.13.2",
     "date": "2026-10-13",
     "changes": [

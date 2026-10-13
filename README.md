@@ -6,6 +6,8 @@ Local semantic search across the [National Security and Defence Documents Datase
 
 Search by concept, filter by country, region, organisation, year, and more — entirely offline after installation.
 
+> **NSDDD 4.0 topic-search guide (slides):** [NSDDD_Topic_Search_guide_v4.0.pdf](NSDDD_Topic_Search_guide_v4.0.pdf) covers the search settings, keyword and Boolean search, clustering, and using NSDDD with an AI assistant through the MCP.
+>
 > **User guide:** For a fuller guide to using the search interface — including social-scientific search strategies, filter combinations, and worked examples — see [NSDDD_Search_Interface_Guide.pdf](NSDDD_Search_Interface_Guide.pdf) in this repository.
 
 ---
