@@ -57,9 +57,11 @@ Exports land in the installer's `outputs/` directory.
 }
 ```
 
-Open a new Claude Code instance after registering. The MCP handshake is
-immediate; the model loads lazily on the first tool call (~60 s for that call:
-metadata + segments + memmap embeddings + encoder), then all calls are fast.
+Open a new Claude Code instance after registering. The server loads the model
+*before* answering the MCP handshake (about 25 s; lazy loading inside a worker
+thread hung on Windows), so set the client's startup timeout above that:
+`"timeout": 120000` (ms) in OpenCode, or the `MCP_TIMEOUT` env var in Claude
+Code. Once started, all calls are fast.
 
 ## Notes
 
