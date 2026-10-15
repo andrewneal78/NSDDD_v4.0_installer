@@ -76,8 +76,7 @@ async def list_tools() -> list[Tool]:
         Tool(
             name='semantic_search',
             description=(
-                'Cross-lingual semantic search across 680 national security '
-                'documents (123 countries and territories, 1987–2026, 1,156,105 segments) using '
+                'Cross-lingual semantic search across ' + engine.corpus_summary() + ' using '
                 'Qwen3-Embedding-0.6B multilingual embeddings. A query in any language '
                 'matches documents in their original language and in English. '
                 'Each result reports its language, segment number and (when '

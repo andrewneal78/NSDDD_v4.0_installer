@@ -371,6 +371,20 @@ def filter_options() -> Dict[str, Any]:
     }
 
 
+def corpus_summary() -> str:
+    """One-line corpus size for tool descriptions, read from the loaded data (empty if unavailable)."""
+    try:
+        ns = _ns
+        md = ns['MODEL_DICT']
+        years = filter_options()['year_range']
+        span = f', {years[0]}–{years[1]}' if years else ''
+        return (f"{len(md['documents_dict']):,} national security documents "
+                f"({len(md['countries_dict']):,} countries and territories{span}, "
+                f"{len(md['segments_dict']):,} segments)")
+    except Exception:
+        return 'national security documents'
+
+
 def corpus_stats() -> Dict[str, Any]:
     """Corpus statistics (loads the model if not yet loaded)."""
     ns = ensure_loaded(semantic=False)

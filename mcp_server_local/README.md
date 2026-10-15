@@ -14,8 +14,8 @@ search code, thresholds, filters and CSV export format as the Voilà interface
 
 ## Multilingual (v4.0)
 
-v4.0 uses **Qwen3-Embedding-0.6B cross-lingual embeddings** (256 dimensions; ~1.16M segments across 680
-documents, 121 countries, 34 languages). A query in any language matches
+v4.0 uses **Qwen3-Embedding-0.6B cross-lingual embeddings** (256 dimensions; 34 languages). Corpus
+size in the tool descriptions is read from the loaded data, so it never goes stale. A query in any language matches
 documents in their original language as well as in English. Each search result
 carries:
 
