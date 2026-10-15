@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.15.4",
+    "date": "2026-10-15",
+    "changes": [
+      "MCP: new optional setting NSDDD_LAZY_LOAD=1 lets AI assistants that give up on slow-starting servers connect at once; the search model then loads on the first search. Off by default."
+    ]
+  },
+  {
     "version": "2026.10.13.4",
     "date": "2026-10-13",
     "changes": [

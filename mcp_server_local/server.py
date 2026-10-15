@@ -28,6 +28,7 @@ Tools:
 
 import asyncio
 import json
+import os
 import sys
 from typing import Any, Optional
 
@@ -210,9 +211,16 @@ async def main():
 
 
 def run():
-    print('NSDDD v4.0 search MCP server: loading the search model first (about 25 seconds)...', file=sys.stderr, flush=True)
-    engine.ensure_loaded()
-    print('Model loaded. Server ready.', file=sys.stderr, flush=True)
+    # Opt-in: NSDDD_LAZY_LOAD=1 answers the MCP handshake immediately and loads the model on the first search
+    # (clients with short connect timeouts otherwise report "no tools"). Off by default because an earlier
+    # lazy-loading design hung on Windows (see the module docstring); this one passed handshake, keyword and
+    # semantic search on macOS and Windows 11 (2026-10-15).
+    if os.environ.get('NSDDD_LAZY_LOAD') == '1':
+        print('NSDDD v4.0 search MCP server: lazy mode, the model loads on the first search (about 25 seconds).', file=sys.stderr, flush=True)
+    else:
+        print('NSDDD v4.0 search MCP server: loading the search model first (about 25 seconds)...', file=sys.stderr, flush=True)
+        engine.ensure_loaded()
+        print('Model loaded. Server ready.', file=sys.stderr, flush=True)
     asyncio.run(main())
 
 

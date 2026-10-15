@@ -192,3 +192,6 @@ resilience_research_*/
 
 # The guide is published as a PDF only
 NSDDD_Topic_Search_guide_v4.0.pptx
+
+# MCP smoke test logs
+mcp_lazy_smoke_stderr_*.txt

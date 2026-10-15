@@ -63,6 +63,16 @@ thread hung on Windows), so set the client's startup timeout above that:
 `"timeout": 120000` (ms) in OpenCode, or the `MCP_TIMEOUT` env var in Claude
 Code. Once started, all calls are fast.
 
+If a client still reports no NSDDD tools (some give up after 5-10 s, and Qwen
+Code's `qwen mcp list` always does), set `NSDDD_LAZY_LOAD=1` in the server's
+environment: the server then answers the handshake in about 2 s and loads the
+model on the first search instead (that first search takes about 25 s longer).
+It is off by default because an earlier version of lazy loading hung on
+Windows; this version passed a full handshake, keyword search and semantic
+search on both macOS and Windows 11 (handshake about 2 s on macOS, 11 s on
+Windows, against 43 s model-first), so it is safe to turn on. Set it as `"environment": {"NSDDD_LAZY_LOAD": "1"}` in
+OpenCode, or `"env": {"NSDDD_LAZY_LOAD": "1"}` in Qwen Code and Claude Code.
+
 ## Notes
 
 - Model and metadata paths are resolved exactly as the notebook resolves them
