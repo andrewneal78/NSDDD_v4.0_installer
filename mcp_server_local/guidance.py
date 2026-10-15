@@ -40,8 +40,11 @@ English did not match; they are genuine hits and count. Pass count_passages_once
 - A topic not being retrieved is not evidence that a country lacks it. Check which documents the country \
 has first.
 
-Workflow: call filter_options once, apply filters (regions, year_min, doc_types), search, read the top results, \
-discard off-topic ones, then summarise. Use keyword_search for literal terms.
+Tools: semantic_search is the main search tool and the default for every topic. keyword_search is only for \
+literal terms (an exact name or phrase); it returns no confidence or score bands.
+
+Workflow: call filter_options once, apply filters (regions, year_min, doc_types), run semantic_search, read the top \
+results, discard off-topic ones, then summarise.
 """
 
 FORMULATE_PROMPT = """\
