@@ -468,6 +468,7 @@ def build_voila_command(py: str) -> list[str]:
         # elsewhere), so the separator is matched by [^A-Za-z0-9_] rather than '/' (a '/' pattern gave 403 on every Windows link).
         '--VoilaConfiguration.file_allowlist=outputs[^A-Za-z0-9_].*[.](csv|xlsx|svg|html)$',
         '--VoilaConfiguration.file_allowlist=XHR[^A-Za-z0-9_].*',
+        '--VoilaConfiguration.file_allowlist=NSDDD_Topic_Search_guide_v4[.]0[.]pdf$',     # the user guide linked from the search page
     ]
     if SHOW_TRACEBACKS_ENABLED:
         cmd.append("--show_tracebacks=True")

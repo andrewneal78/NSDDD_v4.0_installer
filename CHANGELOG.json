@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.16.3",
+    "date": "2026-10-16",
+    "changes": [
+      "The search page now has an \"Open the user guide (PDF)\" link under the title, and the start page links to the guide too."
+    ]
+  },
+  {
     "version": "2026.10.16.2",
     "date": "2026-10-16",
     "changes": [
