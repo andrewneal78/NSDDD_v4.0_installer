@@ -180,3 +180,24 @@ def test_apply_reports_added_documents(world):
     result = du.apply(app, manifest, ['model_files.zip'], log=lambda *_: None)
     assert result['documents_added'] == [{'id': '2', 'title': 'Niue Defence Policy 2026', 'type': 'DD', 'year': '2026'}]
     assert result['countries_added'] == ['Niue'] and result['version'] == '2099.01.01.1'
+
+
+def test_file_in_use_leaves_every_installed_file_as_it_was(world, monkeypatch):
+    """Windows cannot replace a file another program holds open (a copy of NSDDD still running). The update must then
+    leave ALL installed files as they were, not a mix of new and old (seen on the Windows test machine, 2026-10-16)."""
+    app, data, web = world
+    (data / 'model' / 'documents_dict.json').write_text('old docs')
+    manifest = publish(web, '2099.01.01.1', {'model_files.zip': {'documents_dict.json': 'new docs', 'segments.sqlite': 'new index'}})
+    real = du.os.replace
+
+    def locked(src, dst, *a, **k):
+        if Path(src).name == 'segments.sqlite':
+            raise PermissionError(32, 'The process cannot access the file because it is being used by another process')
+        return real(src, dst, *a, **k)
+    monkeypatch.setattr(du.os, 'replace', locked)
+    m = du.fetch_manifest()
+    assert not du.apply(app, m, ['model_files.zip'], log=lambda *_: None)
+    assert (data / 'model' / 'documents_dict.json').read_text() == 'old docs'
+    assert (data / 'model' / 'segments.sqlite').read_text() == 'old index'
+    assert not list((data / 'model').glob('*.upd_old'))
+    assert du.read_state(data)[0] == du.BASELINE_VERSION

@@ -81,7 +81,7 @@ DOWNLOADS = {
             'Country_metadata.csv',
         ],
         'required': True,
-        'description': 'Metadata: 680-document / 123-country-and-territory 4.0 reference CSVs'
+        'description': 'Metadata: 835-document / 125-country-and-territory 4.0 reference CSVs'
     },
     'whats_new': {
         'filename': 'WHATS_NEW_IN_NSDDD_V4.0.md',
@@ -135,49 +135,6 @@ DOWNLOADS = {
         ],
         'soft': True,
         'description': 'Small local language model that writes cluster headings (optional; Apache 2.0)'
-    },
-
-    # OPTIONAL downloads (user chooses which to download)
-    'clean_text': {
-        'filename': 'clean_text_documents_English_and_translated.zip',
-        'size_mb': 43.199,
-        'size_gb': 0.040232,
-        'extract_to': 'documents/',
-        'optional': True,
-        'description': '680 plain text documents (English + translated)'
-    },
-    'spacy': {
-        'filename': 'spacy_documents.zip',
-        'size_mb': 45.642,
-        'size_gb': 0.042507,
-        'extract_to': 'documents/',
-        'optional': True,
-        'description': '680 sentence-segmented documents'
-    },
-    'pdf_originals': {
-        'filename': 'pdf_originals.zip',
-        'size_mb': 7468.007,
-        'size_gb': 6.955123,
-        'extract_to': 'documents/',
-        'optional': True,
-        'description': '680 original PDFs organized by country'
-    },
-    'original_language': {
-        'filename': 'original_language_documents.zip',
-        'size_mb': 9.819,
-        'size_gb': 0.009145,
-
-        'extract_to': 'documents/',
-        'optional': True,
-        'description': '156 original-language plain text files (parallel reference)'
-    },
-    'original_language_spacy': {
-        'filename': 'original_language_spacy.zip',
-        'size_mb': 10.450,
-        'size_gb': 0.009732,
-        'extract_to': 'documents/',
-        'optional': True,
-        'description': '156 original-language sentence-segmented files'
     }
 }
 
@@ -203,8 +160,8 @@ TIMEOUT_SECONDS = 30
 
 # Dataset information
 DATASET_NAME = 'National Security and Defence Documents Dataset (1987-2026) v4.0'
-DATASET_DOCUMENTS = 680
-DATASET_COUNTRIES = 123
+DATASET_DOCUMENTS = 835
+DATASET_COUNTRIES = 125
 DATASET_YEARS = '1987–2026'
-DATASET_SEGMENTS = 1156105
+DATASET_SEGMENTS = 1377867
 DATASET_ENCODING_DIM = 256

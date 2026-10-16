@@ -1,5 +1,17 @@
 [
   {
+    "version": "2026.10.16.1",
+    "date": "2026-10-16",
+    "changes": [
+      "155 new documents from 2026 and earlier years, 835 in all from 125 countries. Seven countries are new: Cabo Verde, Kosovo, Mozambique, Niue, Tajikistan, the United Arab Emirates and Uzbekistan. 21 documents found to be duplicates or wrongly catalogued were removed. The new data arrives as a data update the next time you start NSDDD while online.",
+      "233 documents now have their original-language text aligned sentence by sentence to the English (it was 153). Six more original languages are searchable, including Serbian.",
+      "The search page header shows how many documents, countries and segments are loaded, so you can see which data you are running.",
+      "The \"Add AI headings\" button now sits above its explanation.",
+      "The NSDDD 4.0 topic-search guide (PDF) is updated with the new figures; the old v3.5 workshop guide is removed from the installer folder.",
+      "A data update can no longer leave the data half-replaced: if NSDDD is still running (or a file is in use) when an update arrives, the update stops and your existing data is left exactly as it was."
+    ]
+  },
+  {
     "version": "2026.10.15.4",
     "date": "2026-10-15",
     "changes": [

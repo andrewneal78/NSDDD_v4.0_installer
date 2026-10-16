@@ -162,14 +162,40 @@ def _download(name, size, sha, dest, log):
 def _swap_in(stage, target, mode):
     target = Path(target)
     if mode == 'merge':
+        # All or nothing: first move every file being replaced aside (this fails at once on a file another program holds
+        # open, such as the index of a copy of NSDDD that is still running, before anything has changed), then move the new
+        # files in; on any failure put the old files back. Only then delete the old ones.
         target.mkdir(parents=True, exist_ok=True)
-        for item in stage.iterdir():
-            dest = target / item.name
-            if dest.is_dir():
-                shutil.rmtree(dest)
-            elif dest.exists():
-                dest.unlink()
-            shutil.move(str(item), str(dest))
+        aside, moved = [], []
+        try:
+            for item in stage.iterdir():
+                dest = target / item.name
+                if dest.exists() or dest.is_symlink():
+                    keep = dest.with_name(dest.name + '.upd_old')
+                    if keep.is_dir():
+                        shutil.rmtree(keep, ignore_errors=True)
+                    elif keep.exists():
+                        keep.unlink()
+                    os.replace(dest, keep)
+                    aside.append((dest, keep))
+            for item in stage.iterdir():
+                dest = target / item.name
+                shutil.move(str(item), str(dest))
+                moved.append(dest)
+        except Exception:
+            for dest in moved:
+                if dest.is_dir():
+                    shutil.rmtree(dest, ignore_errors=True)
+                else:
+                    dest.unlink(missing_ok=True)
+            for dest, keep in aside:
+                os.replace(keep, dest)
+            raise
+        for _, keep in aside:
+            if keep.is_dir():
+                shutil.rmtree(keep, ignore_errors=True)
+            else:
+                keep.unlink(missing_ok=True)
         return
     old = target.with_name(target.name + '.old')
     shutil.rmtree(old, ignore_errors=True)
