@@ -162,9 +162,18 @@ def test_update_box_lists_code_changes_and_new_documents(tmp_path, monkeypatch):
 
 
 def test_data_only_correction_is_described(tmp_path, monkeypatch):
-    (tmp_path / 'update_notice.json').write_text(json.dumps({'data': {'version': '2026.11.01.2', 'notes': 'Fixed years.'}}))
+    # old and new document lists were compared and are identical: say so, in words that match the release notes
+    (tmp_path / 'update_notice.json').write_text(json.dumps({'data': {
+        'version': '2026.11.01.2', 'notes': 'Fixed years.', 'documents_added': [], 'documents_removed': [], 'countries_added': []}}))
     html = _notice_function(monkeypatch, tmp_path)()
-    assert 'no documents were added or removed' in html and 'Program' not in html
+    assert 'Compared with the data already on this computer, no documents or countries were added or removed' in html
+    assert 'Program' not in html and 'Corrections to existing data' not in html
+
+
+def test_notice_makes_no_claim_when_the_old_data_could_not_be_compared(tmp_path, monkeypatch):
+    (tmp_path / 'update_notice.json').write_text(json.dumps({'data': {'version': '2026.11.01.2', 'notes': 'Added 155 documents.'}}))
+    html = _notice_function(monkeypatch, tmp_path)()
+    assert 'Added 155 documents.' in html and 'no documents' not in html
 
 
 def test_apply_reports_added_documents(world):

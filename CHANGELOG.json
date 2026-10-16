@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.16.2",
+    "date": "2026-10-16",
+    "changes": [
+      "The green update box now words its message correctly when a data update changes nothing on your computer (for example, if the new documents were already installed), instead of contradicting the release notes."
+    ]
+  },
+  {
     "version": "2026.10.16.1",
     "date": "2026-10-16",
     "changes": [
