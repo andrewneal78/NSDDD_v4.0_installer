@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.16.7",
+    "date": "2026-10-20",
+    "changes": [
+      "The search page's keyword and Boolean help now explains how to search the original-language text: type words with their accents, capitals do not matter, combine languages with OR, and use semantic search to find the same idea across languages."
+    ]
+  },
+  {
     "version": "2026.10.16.6",
     "date": "2026-10-20",
     "changes": [
