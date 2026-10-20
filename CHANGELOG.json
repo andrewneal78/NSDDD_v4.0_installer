@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.16.5",
+    "date": "2026-10-20",
+    "changes": [
+      "The user guide PDF is now the 26-slide version, with a new Document Types slide and a redesigned slide on the metadata CSV (835 documents, 125 countries)."
+    ]
+  },
+  {
     "version": "2026.10.16.4",
     "date": "2026-10-20",
     "changes": [
