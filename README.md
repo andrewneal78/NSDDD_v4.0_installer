@@ -143,6 +143,12 @@ python3 launch.py --no-update     # skip the check for one run
 - **Git installs (cloned repo):** also update themselves at start-up (a fast-forward `git pull`), but only while no tracked file has local changes and your checkout is not ahead of origin. A checkout with edits only announces the update; run `python3 launch.py --update` to pull it yourself.
 - Set `NSDDD_AUTO_UPDATE=0` to stop all automatic installs (program and data), or `NSDDD_AUTO_UPDATE=1` to force them in a git checkout that has local changes.
 
+## Anonymous start-up count
+
+So the project can see roughly how many installs are in use, NSDDD sends **one tiny request a day** when it starts, to the project's free [GoatCounter](https://www.goatcounter.com) page. It carries only the app version, the data version and your operating system family (Windows, macOS or Linux). It sends no documents, searches, names, e-mail addresses or file paths, and sets no cookie. As with any web request, GoatCounter receives the IP address and keeps only a one-way hash of it to tell visitors apart. Offline, nothing is sent, and a failure never stops NSDDD starting. A git checkout never sends it.
+
+To switch it off, set `NSDDD_NO_PING=1` in your environment, or create an empty file called `no_ping` next to `launch.py`. The code is in `usage_ping.py`.
+
 ## Search Interface
 
 The browser-based interface provides:

@@ -561,6 +561,11 @@ def main():
         restart_self()
     if not args.no_data_update:
         maybe_update_data(cwd, apply=True)       # data lives outside git, so it is always safe to update
+    try:
+        import usage_ping                         # anonymous once-a-day start-up count; see usage_ping.py and the README
+        usage_ping.ping_once_a_day(cwd, local_version(cwd))
+    except Exception:
+        pass
 
     if args.no_update:
         os.environ['NSDDD_AUTO_UPDATE'] = '0'

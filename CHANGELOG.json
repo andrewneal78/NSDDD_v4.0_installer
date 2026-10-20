@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.16.4",
+    "date": "2026-10-20",
+    "changes": [
+      "NSDDD now sends one anonymous count a day when it starts (app version, data version and operating system only; no searches, documents or personal details) so the project can see how many installs are in use. To switch it off, set NSDDD_NO_PING=1 or create an empty file called no_ping next to launch.py. The README explains what is sent."
+    ]
+  },
+  {
     "version": "2026.10.16.3",
     "date": "2026-10-16",
     "changes": [
