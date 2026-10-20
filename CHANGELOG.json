@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.16.6",
+    "date": "2026-10-20",
+    "changes": [
+      "The MCP server (the link that lets an AI assistant use NSDDD) can now run Boolean searches: AND, OR, NOT, brackets, \"exact phrases\" and wildcards, with the same filters and export as keyword search. Restart your AI assistant after the update so it sees the new boolean_search tool. The optional HTTP API has the same search at /boolean."
+    ]
+  },
+  {
     "version": "2026.10.16.5",
     "date": "2026-10-20",
     "changes": [

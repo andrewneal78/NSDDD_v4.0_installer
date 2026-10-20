@@ -37,6 +37,7 @@ carries:
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `semantic_search` | Qwen3-Embedding-0.6B cross-lingual similarity search; metadata filters; clustering; `context_window` segments of surrounding text per hit; multilingual fields per result; CSV export (results + `_norm_context` companion) |
 | `keyword_search`  | Exact-string search with word boundaries (optional fuzzy matching); same filters/context/export/multilingual fields                                                                                                         |
+| `boolean_search`  | Boolean keyword search: `AND`/`&`, `OR`/`\|`, `NOT`/`!`, brackets, `"exact phrases"`, wildcards `*` `?`; same filters/context/export/multilingual fields; a query that cannot be parsed returns an error |
 | `filter_options`  | Enumerate available filter values (regions, organisations, income groups, Freedom House status, doc types, years…) — no model load                                                                                          |
 | `corpus_stats`    | Corpus, model and per-language statistics                                                                                                                                                                                   |
 

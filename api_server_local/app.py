@@ -87,6 +87,16 @@ class KeywordRequest(BaseModel):
     result_limit: int = 20
 
 
+class BooleanRequest(BaseModel):
+    query: str = Field(..., description='e.g. (cyber* OR digital) AND "critical infrastructure" AND NOT terrorism')
+    scoring: str = Field('match_count', description="'match_count', 'avg_score' or 'max_score'")
+    context_window: int = 1
+    filters: Optional[Filters] = None
+    export: bool = False
+    export_name: Optional[str] = None
+    result_limit: int = 20
+
+
 # --------------------------------------------------------------------------- #
 # App
 # --------------------------------------------------------------------------- #
@@ -128,6 +138,7 @@ async def root():
             'health': '/health',
             'semantic_search': '/search (POST)',
             'keyword_search': '/keyword (POST)',
+            'boolean_search': '/boolean (POST)',
             'filters': '/filters',
             'stats': '/stats',
             'guidance': '/guidance',
@@ -193,6 +204,28 @@ async def keyword(req: KeywordRequest):
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f'Keyword search failed: {e}')
+
+
+@app.post('/boolean')
+async def boolean(req: BooleanRequest):
+    """Boolean keyword search: AND, OR, NOT, brackets, "phrases", wildcards * and ?."""
+    try:
+        out = await _to_thread(
+            engine.boolean_search,
+            query=req.query,
+            scoring=req.scoring,
+            context_window=req.context_window,
+            filters=req.filters.as_engine_dict() if req.filters else None,
+            export=req.export,
+            export_name=req.export_name,
+            result_limit=req.result_limit,
+        )
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f'Boolean search failed: {e}')
+    if 'error' in out:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=out)
+    return out
 
 
 @app.get('/filters')

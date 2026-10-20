@@ -41,7 +41,9 @@ English did not match; they are genuine hits and count. Pass count_passages_once
 has first.
 
 Tools: semantic_search is the main search tool and the default for every topic. keyword_search is only for \
-literal terms (an exact name or phrase); it returns no confidence or score bands.
+literal terms (an exact name or phrase); it returns no confidence or score bands. boolean_search combines terms with \
+AND, OR, NOT, brackets, "exact phrases" and wildcards (cyber*): use it when the user asks for a Boolean search or needs \
+terms combined or excluded. It matches words in the language you type, so search each language you need.
 
 Workflow: call filter_options once, apply filters (regions, year_min, doc_types), run semantic_search, read the top \
 results, discard off-topic ones, then summarise.

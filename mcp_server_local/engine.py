@@ -335,6 +335,54 @@ def keyword_search(keyword: str,
     return response
 
 
+def boolean_search(query: str,
+                   scoring: str = 'match_count',
+                   context_window: int = 1,
+                   filters: Optional[Dict] = None,
+                   export: bool = False,
+                   export_format: str = 'xlsx',
+                   export_name: Optional[str] = None,
+                   result_limit: int = 20,
+                   count_passages_once: bool = True) -> Dict[str, Any]:
+    """Boolean keyword search (AND, OR, NOT, brackets, "phrases", * and ? wildcards) via the notebook's run_boolean_search."""
+    ns = ensure_loaded(semantic=False)
+    if scoring not in ('match_count', 'avg_score', 'max_score'):
+        return {'error': f"scoring must be 'match_count', 'avg_score' or 'max_score', not {scoring!r}"}
+    try:    # the notebook function prints a parse error and returns nothing; say so in the reply instead
+        from _library.boolean_parser import BooleanQueryParser
+        BooleanQueryParser().parse(query)
+    except Exception as e:  # noqa: BLE001
+        return {'error': f'Could not parse the Boolean query: {e}',
+                'syntax': 'AND (&), OR (|), NOT (!), brackets, "exact phrase", wildcards * and ?; '
+                          'example: (cyber* OR digital) AND "critical infrastructure" AND NOT terrorism'}
+    with redirect_stdout(sys.stderr):
+        cfg = ns['SearchConfig'](
+            topics=[query],
+            boolean_mode=True,
+            boolean_scoring=scoring,
+            context_window=context_window,
+            filters=_make_filters(ns, filters),
+            export_format=export_format,
+            count_passages_once=count_passages_once,
+        )
+        results, cluster_info = ns['run_boolean_search'](query, cfg, ns['MODEL_DICT'])
+        export_paths: List[str] = []
+        if export and results:
+            export_paths = _export(ns, query, results, cluster_info, cfg, file_stem=export_name)
+
+    response = _format_response(results, cluster_info, result_limit, ns=ns)
+    response.update({
+        'query': query,
+        'search_type': 'boolean',
+        'scoring': scoring,
+        'pairs_merged': cluster_info.get('pairs_merged', 0),
+        'context_window': context_window,
+        'filters': filters or {},
+        'export_paths': export_paths,
+    })
+    return response
+
+
 def filter_options() -> Dict[str, Any]:
     """Enumerate available values for every metadata filter field."""
     ns = load_namespace()

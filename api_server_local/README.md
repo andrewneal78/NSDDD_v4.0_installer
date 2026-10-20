@@ -29,6 +29,7 @@ reports the per-language `language_breakdown` and `documents_with_alignment`.
 | `GET`  | `/filters` | Enumerate available metadata filter values | no |
 | `POST` | `/search` | Qwen3-Embedding-0.6B cross-lingual semantic search | yes (first call) |
 | `POST` | `/keyword` | Exact / fuzzy keyword search | yes (first call) |
+| `POST` | `/boolean` | Boolean keyword search (AND, OR, NOT, brackets, "phrases", wildcards) | yes (first call) |
 | `GET`  | `/stats` | Corpus, model and per-language statistics | yes |
 | `GET`  | `/docs` | Interactive OpenAPI (Swagger) UI | no |
 

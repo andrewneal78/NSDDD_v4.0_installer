@@ -22,6 +22,7 @@ Tools:
     filters, clustering, context windows and CSV export (results +
     norm_context companion)
   - keyword_search: exact/fuzzy keyword search with the same filters/export
+  - boolean_search: AND / OR / NOT, brackets, "phrases" and wildcards over the same segments, same filters/export
   - filter_options: enumerate available metadata filter values
   - corpus_stats: corpus, model and per-language information
 """
@@ -151,6 +152,37 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name='boolean_search',
+            description=(
+                'Boolean keyword search over all segments (English and original-language text), with the same metadata filters, '
+                'context windows and export as keyword_search. Operators: AND (or &), OR (or |), NOT (or !, as in '
+                '"AND NOT x"), brackets for grouping, "double quotes" for an exact phrase, and wildcards * and ?. '
+                'Precedence is NOT, then AND, then OR, so use brackets. A term with no wildcard matches whole words only '
+                '(use cyber* for cyber, cybersecurity, cyberattack). Example: '
+                '(cyber* OR digital) AND "critical infrastructure" AND NOT terrorism. '
+                'Results are not ranked by relevance: match_count scores a segment by how many of the query terms it contains. '
+                'Search the language of the text you want (a term matches only that language); '
+                'use semantic_search to find the same idea across languages. A query that cannot be parsed returns an error.'
+            ),
+            inputSchema={
+                'type': 'object',
+                'properties': {
+                    'query': {'type': 'string',
+                              'description': 'Boolean query, e.g. (nuclear OR radiological) AND weapon* AND NOT "arms control"'},
+                    'scoring': {'type': 'string', 'enum': ['match_count', 'avg_score', 'max_score'], 'default': 'match_count',
+                                'description': 'How a segment is scored from its matching terms (match_count is the default)'},
+                    'context_window': {'type': 'integer', 'default': 1},
+                    'filters': _FILTERS_SCHEMA,
+                    'export': {'type': 'boolean', 'default': False},
+                    'export_format': {'type': 'string', 'enum': ['csv', 'xlsx'], 'default': 'xlsx'},
+                    'export_name': {'type': 'string'},
+                    'result_limit': {'type': 'integer', 'default': 20},
+                    'count_passages_once': {'type': 'boolean', 'default': True},
+                },
+                'required': ['query'],
+            },
+        ),
+        Tool(
             name='filter_options',
             description=('List available values for every metadata filter '
                          '(regions, organisations, income groups, Freedom House '
@@ -195,6 +227,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         result = await asyncio.to_thread(engine.semantic_search, **arguments)
     elif name == 'keyword_search':
         result = await asyncio.to_thread(engine.keyword_search, **arguments)
+    elif name == 'boolean_search':
+        result = await asyncio.to_thread(engine.boolean_search, **arguments)
     elif name == 'filter_options':
         result = await asyncio.to_thread(engine.filter_options)
     elif name == 'corpus_stats':
