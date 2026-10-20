@@ -36,3 +36,15 @@ def test_search_runs_the_notebook_boolean_search(monkeypatch):
     assert calls['q'] == '(cyber* OR digital) AND NOT terrorism'
     assert calls['cfg']['boolean_mode'] is True and calls['cfg']['boolean_scoring'] == 'max_score'
     assert out['search_type'] == 'boolean' and out['num_results'] == 0
+
+
+def test_broad_query_gets_a_narrowing_note(monkeypatch):
+    ns = {'SearchConfig': lambda **kw: kw, 'MODEL_DICT': {},
+          'run_boolean_search': lambda q, cfg, md: (list(range(600)), {})}
+    monkeypatch.setattr(engine, 'ensure_loaded', lambda semantic=True: ns)
+    monkeypatch.setattr(engine, '_make_filters', lambda ns, f: f)
+    monkeypatch.setattr(engine, '_format_response', lambda *a, **k: {'num_results': 600})
+    out = engine.boolean_search('defen* OR militar*', result_limit=10)
+    assert 'Narrow it with AND' in out['search_notes'][0] and 'Only 10' in out['search_notes'][0]
+    ns['run_boolean_search'] = lambda q, cfg, md: (list(range(5)), {})
+    assert engine.boolean_search('x AND y')['search_notes'] == []

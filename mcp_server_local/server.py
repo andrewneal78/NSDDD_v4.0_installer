@@ -162,7 +162,10 @@ async def list_tools() -> list[Tool]:
                 '(cyber* OR digital) AND "critical infrastructure" AND NOT terrorism. '
                 'Results are not ranked by relevance: match_count scores a segment by how many of the query terms it contains. '
                 'Search the language of the text you want (a term matches only that language); '
-                'use semantic_search to find the same idea across languages. A query that cannot be parsed returns an error.'
+                'use semantic_search to find the same idea across languages. A query that cannot be parsed returns an error. '
+                'Keep queries narrow: an OR list of common stems (defen* OR militar*) can match tens of thousands of segments. '
+                'Combine a topic term with AND, add filters (regions, year_min, doc_types), and start with result_limit 10 to 20; '
+                '`num_results` always gives the full count, and export=true saves every match to a file instead of returning it.'
             ),
             inputSchema={
                 'type': 'object',

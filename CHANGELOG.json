@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.10.16.8",
+    "date": "2026-10-20",
+    "changes": [
+      "The MCP server's Boolean search now warns an AI assistant when a query is very broad (more than 500 matching segments) and tells it how to narrow the search with AND terms, filters, a small result limit or an export. Restart your AI assistant after the update to pick up the new tool description."
+    ]
+  },
+  {
     "version": "2026.10.16.7",
     "date": "2026-10-20",
     "changes": [

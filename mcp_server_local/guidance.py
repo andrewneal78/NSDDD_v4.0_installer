@@ -43,7 +43,10 @@ has first.
 Tools: semantic_search is the main search tool and the default for every topic. keyword_search is only for \
 literal terms (an exact name or phrase); it returns no confidence or score bands. boolean_search combines terms with \
 AND, OR, NOT, brackets, "exact phrases" and wildcards (cyber*): use it when the user asks for a Boolean search or needs \
-terms combined or excluded. It matches words in the language you type, so search each language you need.
+terms combined or excluded. It matches words in the language you type, so search each language you need. Keep it \
+narrow: a list of common stems joined by OR can match tens of thousands of segments. Pair a topic term with AND, \
+filter by region, year or type, start with result_limit 10-20 (num_results gives the full count), and export when the \
+user needs every match.
 
 Workflow: call filter_options once, apply filters (regions, year_min, doc_types), run semantic_search, read the top \
 results, discard off-topic ones, then summarise.

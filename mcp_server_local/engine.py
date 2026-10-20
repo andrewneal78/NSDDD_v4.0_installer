@@ -375,6 +375,9 @@ def boolean_search(query: str,
         'query': query,
         'search_type': 'boolean',
         'scoring': scoring,
+        'search_notes': ([f'{len(results)} segments match, a broad query. Only {result_limit} are returned. Narrow it with AND terms '
+                          'or filters (regions, year_min, doc_types), or set export=true to save all of them to a file.']
+                         if len(results) > 500 else []),
         'pairs_merged': cluster_info.get('pairs_merged', 0),
         'context_window': context_window,
         'filters': filters or {},
