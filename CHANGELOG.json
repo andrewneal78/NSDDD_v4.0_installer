@@ -1,5 +1,26 @@
 [
   {
+    "version": "2026.10.16.11",
+    "date": "2026-10-23",
+    "changes": [
+      "The user guide PDF is now the 29-slide version: the slides on using an AI assistant to analyse results are combined into two, with clearer advice on what to give the AI (metadata, inclusion criteria, what to normalise) and what to check."
+    ]
+  },
+  {
+    "version": "2026.10.16.10",
+    "date": "2026-10-23",
+    "changes": [
+      "The user guide PDF is now the 30-slide version. New slides cover what is in and out of the dataset, reading results responsibly, and letting an AI assistant run searches or analyse results; figures are corrected (835 documents, 125 countries). The 'Getting NSDDD 4.0' slide now explains that the dataset itself will be archived on Edinburgh DataShare, with the original PDFs, plain-text versions and metadata files, and that the search tool is a separate program built on that data."
+    ]
+  },
+  {
+    "version": "2026.10.16.9",
+    "date": "2026-10-23",
+    "changes": [
+      "The search page now has a \"Report a problem or suggest a feature\" link under its title. It opens a short form in your browser with your app version, data version and operating system already filled in; nothing is sent until you press Submit."
+    ]
+  },
+  {
     "version": "2026.10.16.8",
     "date": "2026-10-20",
     "changes": [

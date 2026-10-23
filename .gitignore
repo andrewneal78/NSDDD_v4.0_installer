@@ -195,3 +195,7 @@ NSDDD_Topic_Search_guide_v4.0.pptx
 
 # MCP smoke test logs
 mcp_lazy_smoke_stderr_*.txt
+
+# Local presentation material, not part of the app
+NSDDD_Introduction_v4.0.pptx
+qrcode_andrewneal78.github.io.png

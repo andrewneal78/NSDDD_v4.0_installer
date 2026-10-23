@@ -149,6 +149,10 @@ So the project can see roughly how many installs are in use, NSDDD sends **one t
 
 To switch it off, set `NSDDD_NO_PING=1` in your environment, or create an empty file called `no_ping` next to `launch.py`. The code is in `usage_ping.py`.
 
+## Feedback
+
+The search page has a **Report a problem or suggest a feature** link under its title. It opens a short Microsoft Forms page (University of Edinburgh) in your browser; no sign-in is needed. The form already shows your app version, data version and operating system. NSDDD itself sends nothing: the form is submitted only when you press Submit, and you choose what to write and whether to leave an email address. Please do not include names, passwords or other private information.
+
 ## Search Interface
 
 The browser-based interface provides:
