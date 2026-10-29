@@ -745,7 +745,7 @@ def main():
     if failed_soft:
         print()
         print(f"  ⚠ Optional files not installed: {', '.join(sorted(set(failed_soft)))}")
-        print('    The search still works; cluster headings will use keywords instead of the small language model.')
+        print('    The search still works; clusters stay numbered (no AI headings).')
 
     if failed_required:
         print()

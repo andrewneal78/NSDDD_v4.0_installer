@@ -5,8 +5,8 @@ New documents and corrections reach an installed copy as a new *data version* on
 Each start compares it with the data on this computer and downloads only the zips that changed. Everything is
 downloaded, checked and unpacked into a temporary folder before any installed file is touched.
 
-Standard library only. Programs: launch.py (checks at start-up), fetch_data.py / install.py (record the version
-after a fresh install), publish_data_release.py (the editor's tool that builds data_version.json)."""
+Standard library only. Programs: launch.py (checks at start-up), install.py (checks each download against this
+manifest and records the version after a fresh install), publish_data_release.py (the editor's tool that builds data_version.json)."""
 import hashlib, http.client, json, os, shutil, ssl, time, zipfile
 from pathlib import Path
 from urllib.error import HTTPError, URLError

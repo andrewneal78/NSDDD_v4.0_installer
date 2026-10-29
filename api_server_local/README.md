@@ -1,10 +1,9 @@
 # NSDDD v4.0 — Local FastAPI Server
 
-**Local use only — not part of the public NSDDD distribution.**
+**Optional.** The search page does not need this server; install its extra packages only if you want an HTTP API.
 
-> **Model/metadata paths:** this server reads model + metadata from the install workspace
-> resolved via `install_config.json`. See [`../WORKSPACE_NOTES.md`](../WORKSPACE_NOTES.md)
-> for where the workspace is, how it's resolved, and why it's a thin symlink dir in `~/`.
+> **Model/metadata paths:** this server reads the model and metadata from the data folder recorded in
+> `install_config.json` by the installer (the `install_path` entry).
 
 The HTTP counterpart of the [MCP server](../mcp_server_local/README.md). Both wrap the
 **same** v4.0 engine (`mcp_server_local.engine`), which executes the engine cells of
@@ -66,11 +65,11 @@ Environment overrides: `NSDDD_API_HOST` (default `127.0.0.1`), `NSDDD_API_PORT`
 
 ## Install the extra deps
 
-`fastapi` and `uvicorn` are not in the public installer requirements. Install them into
-the installer's `.venv`:
+`fastapi` and `uvicorn` are not in the installer's requirements. From the installer folder, install them into its
+`.venv` with the release constraints:
 
 ```bash
-/path/to/python3 -m pip install -r api_server_local/requirements.txt
+.venv/bin/python -m pip install -r requirements-api.txt -c constraints.txt
 ```
 
 ## Notes

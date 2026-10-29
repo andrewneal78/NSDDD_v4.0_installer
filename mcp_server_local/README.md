@@ -2,9 +2,8 @@
 
 
 
-> **Model/metadata paths:** this server reads model + metadata from the install workspace
-> resolved via `install_config.json`. See [`../WORKSPACE_NOTES.md`](../WORKSPACE_NOTES.md)
-> for where the workspace is, how it's resolved, and why it's a thin symlink dir in `~/`.
+> **Model/metadata paths:** this server reads the model and metadata from the data folder recorded in
+> `install_config.json` by the installer (the `install_path` entry).
 
 An MCP (stdio) server wrapping the search engine of
 `document_metadata_search_voila.ipynb`. The engine cells of the notebook are
@@ -14,7 +13,7 @@ search code, thresholds, filters and CSV export format as the Voilà interface
 
 ## Multilingual (v4.0)
 
-v4.0 uses **Qwen3-Embedding-0.6B cross-lingual embeddings** (256 dimensions; 34 languages). Corpus
+v4.0 uses **Qwen3-Embedding-0.6B cross-lingual embeddings** (256 dimensions; English and 38 original languages). Corpus
 size in the tool descriptions is read from the loaded data, so it never goes stale. A query in any language matches
 documents in their original language as well as in English. Each search result
 carries:

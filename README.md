@@ -1,6 +1,6 @@
 # NSDDD v4.0 — National Security Documents Search
 
-> **Pre-release:** NSDDD 4.0 is a pre-release. The full dataset will be released on Edinburgh DataShare early in the new year, with all the new documents from 2026 plus other additions as they are found; bug fixes are published as updates until then. The installer downloads its data from this project's GitHub release (`data-4.0-pre`), not from DataShare. The DataShare link and citation below refer to 3.5 and will be replaced for the final release. The standalone Windows package runs offline. New users should start with `start_here.html`.
+> **Pre-release:** NSDDD 4.0 is a pre-release. The full dataset will be released on Edinburgh DataShare early in the new year, with all the new documents from 2026 plus other additions as they are found; bug fixes are published as updates until then. The installer downloads its data from this project's GitHub release (`data-4.0-pre`), not from DataShare. The DataShare link and citation below refer to 3.5 and will be replaced for the final release. The standalone Windows package (`NSDDD_4.0_Windows.zip` on the [releases page](https://github.com/andrewneal78/NSDDD_v4.0_installer/releases)) is built separately from this repository; its `Setup.bat` downloads the same data during set-up, after which it runs offline. New users should start with `start_here.html`.
 
 Local semantic search across the [National Security and Defence Documents Dataset (NSDDD) v4.0](https://datashare.ed.ac.uk/handle/10283/9182): **835 national security strategy documents from 125 countries, 1987–2026**, with about 1.38 million pre-computed sentence embeddings in English and 38 original languages. You can search in English or in any of those languages, and look up exact terms in the original texts with keyword search.
 
@@ -15,7 +15,7 @@ Search by concept, filter by country, region, organisation, year, and more — e
 | | Minimum | Recommended |
 |---|---|---|
 | RAM | 8 GB | 16 GB |
-| Free disk space | 8 GB | 15 GB |
+| Free disk space | 10 GB | 15 GB |
 | Storage | SSD strongly advised | SSD |
 | Processor | Any 64-bit Intel/AMD or Apple Silicon (about 2018 or later) | Apple M-series, or a recent Intel/AMD with 8+ cores |
 | Graphics card | Not needed | Not needed |
@@ -24,7 +24,7 @@ Search by concept, filter by country, region, organisation, year, and more — e
 
 **Why 8 GB of RAM?** The search app itself peaks at about 3 GB: the language model (Qwen3-Embedding-0.6B, about 1.1 GB), the search index (0.6 GB) and working memory. Segment texts are read from disk as needed rather than held in memory. The operating system, the search interface and your browser come on top, so 8 GB is the practical minimum; 16 GB keeps it fast alongside other work. 4 GB computers are not recommended.
 
-**Why 8 GB of disk?** The installed files take about 4 GB (search index 0.6 GB, segment texts 0.4 GB, language model 1.1 GB, document viewer pages 0.5 GB, Python environment 1–2 GB). During installation the downloaded zip files sit alongside the unpacked files.
+**Why 10 GB of disk?** The installed files take about 4 GB (search index 0.6 GB, segment texts 0.4 GB, language model 1.1 GB, document viewer pages 0.5 GB, Python environment 1–2 GB). During installation the downloaded zip files sit alongside the unpacked files, and later data updates need room for a second copy of what they replace. The installer refuses to start with less than 8 GB free.
 
 **Counting passages:** the corpus holds each translated document in English and in its original language, and both can match a search. By default each passage counts once: an original-language match is merged into the English match of the same passage (the English row also carries the original text). The results banner, the export's Search settings sheet and the MCP field `pairs_merged` say how many were merged. Untick *Count each passage once* to count both.
 
@@ -56,7 +56,12 @@ If you see `Python 3.11` or `Python 3.12`, you're ready. If not (or if the comma
 
 **Windows note**
 
-This build uses pinned dependencies for Python 3.11/3.12; Python 3.12 is tested. If you need to install Python, choose Python 3.12 from https://www.python.org/downloads/ — tick **Add Python to PATH** during install.
+Most Windows users should use the standalone Windows package described at the top of this page, which brings its own Python. The steps below are for installing from this repository. This build uses pinned dependencies for Python 3.11/3.12; Python 3.12 is tested. If you need to install Python, choose Python 3.12 from https://www.python.org/downloads/ — tick **Add Python to PATH** during install.
+
+**Linux note**
+
+On Debian and Ubuntu the installer needs the `venv` module, which is a separate package: `sudo apt install python3-venv` (or `python3.12-venv`).
+
 ---
 
 ### Step 1 — Download the installer
@@ -67,7 +72,7 @@ Click the green **Code** button on this page, then **Download ZIP**. Extract the
 
 ### Step 2 — Open a terminal in that folder
 
-After extracting the ZIP, right-click the extracted installer folder and open a terminal there.
+Mac users who double-click `Install NSDDD.command` in Step 3 can skip this step. On Linux and Windows, right-click the extracted installer folder and open a terminal there.
 
 - **Mac:** choose **Open in Terminal**, **New Terminal at Folder**, or **New Terminal Tab at Folder**.
 - On some Macs, these options appear inside the **Services** submenu.
@@ -84,12 +89,14 @@ After extracting the ZIP, right-click the extracted installer folder and open a 
 | **Linux** | `python3 install.py` |
 | **Windows** | `python install.py` |
 
-When prompted for the install directory, press Enter to accept the default location, or type a different path and press Enter.
+When prompted for the install directory, press Enter to accept the default location, or type a different path and press Enter (`~` means your home folder; a relative path is taken from the installer folder). The installer prints the full path it will use.
+
+**Do not move or rename the installer folder after installation.** The Python environment inside it records its own location; if you need to move it, delete `.venv` and run the installer again.
 
 The installer will walk you through:
 
 - Setting up an isolated Python environment (nothing changed system-wide)
-- Downloading the search index and the multilingual language model (Qwen3-Embedding-0.6B) from the project's GitHub data release (about 2.5 GB in total; nothing is downloaded from HuggingFace or Edinburgh DataShare)
+- Downloading the search index and the multilingual language model (Qwen3-Embedding-0.6B) from the project's GitHub data release (about 2.5 GB in total; nothing is downloaded from HuggingFace or Edinburgh DataShare), checking each file against the SHA-256 checksum published with the release
 - Installing Python dependencies
 
 **Estimated time: 20–45 minutes** depending on internet speed. Downloads can be interrupted and resumed.
@@ -135,7 +142,7 @@ is missing, the 'Add AI headings' button is switched off and clusters stay numbe
 While NSDDD 4.0 is a pre-release, bug fixes are published often. A download install (the Windows package, or a Mac install from the GitHub zip) **checks for a newer version every time you start it while online, installs it, and tells you** in the launcher window and in a green box on the search page. Offline, it starts the version you have.
 
 ```bash
-python3 launch.py --update-only   # check and install without starting the search page (Update NSDDD.bat / Update NSDDD.command)
+python3 launch.py --update-only   # check and install without starting the search page (Update NSDDD.command on a Mac; Update NSDDD.bat in the Windows package)
 python3 launch.py --no-update     # skip the check for one run
 ```
 
@@ -159,7 +166,7 @@ The browser-based interface provides:
 
 **Two search modes:**
 - **Semantic search** — AI-powered conceptual matching (finds documents about an idea, not just exact words)
-- **Keyword search** — regex-based, with optional Boolean operators (AND, OR, NOT) and fuzzy matching
+- **Keyword search** — exact words and phrases with `*` and `?` wildcards (not regular expressions), optional Boolean operators (AND, OR, and NOT after AND, as in `cyber AND NOT terrorism`) and fuzzy matching
 
 **Filters:**
 - Country (all 125, individually selectable)
@@ -168,12 +175,12 @@ The browser-based interface provides:
 - Income group (World Bank classification)
 - Democracy status (Freedom House)
 - Document type (national security strategy, defence white paper, strategic review)
-- Year range (1987–2025)
+- Year range (1987–2026)
 - Most recent document per country only
 
 **Output:**
-- Results grouped into semantic clusters with auto-generated labels
-- Export to CSV
+- Results grouped into numbered semantic clusters, with optional AI-written headings
+- Export to Excel (`.xlsx`, the default) or CSV
 - Visualisations: results by year, top countries, cluster overview
 
 ---

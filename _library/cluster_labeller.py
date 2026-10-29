@@ -8,7 +8,7 @@ keyword headings; a cluster without an AI heading simply keeps its number.
 Rules applied to every heading (rule set C of the tests; minimum 3 words from 2026-10-02, 2 words from 2026-10-04): 2 to 8 words; no list marker, markdown, digits, colon or
 verb; not made of generic words only; not in capitals; and not a near-copy of another heading in the same search
 (content-word overlap of 60% or more). A rejected heading is regenerated from a different set of the cluster's
-sentences (up to 8 tries); a cluster with no acceptable heading is left out of the result and the caller keeps its number.
+sentences (up to TRIES times, below); a cluster with no acceptable heading is left out of the result and the caller keeps its number.
 The sentences the model reads are distinct (no identical sentence twice, no near copies, at most 2 per document).
 """
 import os, re, time
@@ -19,7 +19,7 @@ OLLAMA_MODEL = 'qwen3:0.6b'
 
 # ============================================================================================================
 # THE RULES: edit here. A heading that breaks any rule is thrown away and the model tries again from a different
-# set of the cluster's sentences (TRIES times); if nothing passes, the cluster keeps its keyword heading.
+# set of the cluster's sentences (TRIES times); if nothing passes, the cluster keeps its number.
 # ============================================================================================================
 MIN_WORDS = 2              # fewest words in a heading (3 until 2026-10-04; two-word headings allowed at the editor's request)
 MAX_WORDS = 8              # most words in a heading
