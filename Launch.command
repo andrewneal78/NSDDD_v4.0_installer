@@ -1,32 +1,15 @@
 #!/bin/bash
 cd "$(dirname "$0")" || exit 1
-
-
-# Resolve Python: the one recorded in install_config.json, then the local .venv, then python3 on the PATH.
-# install_config.json is read with the installer's own environment, never the system python3: on a Mac without
-# Apple's developer tools /usr/bin/python3 is only a stub that asks to install them.
+# Python: the one in install_config.json, read with the installer's own Python (the system python3 may be
+# only a stub on a Mac without the developer tools), then .venv, then python3 on the PATH.
 PYTHON=""
-for reader in ".venv/bin/python3" ".nsddd_python/bin/python3"; do
-    if [ -x "$reader" ] && [ -f "install_config.json" ]; then
-        PYTHON=$("$reader" -c "import json; print(json.load(open('install_config.json')).get('python',''))" 2>/dev/null)
-        break
-    fi
+for r in .venv/bin/python3 .nsddd_python/bin/python3; do
+    [ -x "$r" ] && [ -f install_config.json ] && PYTHON=$("$r" -c "import json; print(json.load(open('install_config.json')).get('python',''))" 2>/dev/null) && break
 done
 if [ -z "$PYTHON" ] || [ ! -x "$PYTHON" ]; then
-    if [ -x ".venv/bin/python3" ]; then
-        PYTHON=".venv/bin/python3"
-    else
-        PYTHON="python3"
-    fi
+    if [ -x .venv/bin/python3 ]; then PYTHON=.venv/bin/python3; else PYTHON=python3; fi
 fi
-
-echo "================================================"
-echo "  NSDDD v4.0 Search Interface"
-echo "  Checking for updates, then launching..."
-echo "  Note: browser may show 'server not found' briefly."
-echo "  Please wait a few seconds."
-echo "================================================"
-echo ""
-
-# launch.py handles update checks and starts/stops Voilà
+echo "NSDDD v4.0: checking for updates, then launching. The browser may show 'server not found' briefly."
+# Updates overwrite this file while bash runs it, so the launch.py line must end at byte 913 in every version.
+##########################################################
 "$PYTHON" launch.py
