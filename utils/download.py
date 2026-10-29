@@ -130,6 +130,13 @@ def download_file(
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
 
+    # A file left complete by an earlier run (e.g. one whose extraction failed) needs no request: asking for the range
+    # after its last byte gets HTTP 416 on every retry. The caller's digest check decides whether it is usable.
+    if resume and expected_size and destination.exists() and destination.stat().st_size == expected_size:
+        if progress_callback:
+            progress_callback(expected_size, expected_size)
+        return destination
+
     if requests is None:
         return _download_file_stdlib(
             url=url,
@@ -146,7 +153,6 @@ def download_file(
     session = create_download_session(timeout)
 
     # Retry loop for transient failures
-    last_error = None
     for attempt in range(max_retries):
         try:
             # Check for partial download
@@ -182,24 +188,29 @@ def download_file(
                 allow_redirects=True
             )
             response.raise_for_status()
+            if downloaded_size and response.status_code == 200:
+                # The server ignored the range and is sending the whole file: start again instead of appending
+                downloaded_size, mode = 0, 'wb'
             break  # Success, exit retry loop
 
         except (requests.ConnectionError, requests.Timeout) as e:
-            last_error = e
+            session.close()
             if attempt < max_retries - 1:
                 wait_time = (attempt + 1) * 5  # 5s, 10s, 15s backoff
                 print(f'  ⚠ Connection timeout, retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})...')
                 time.sleep(wait_time)
+                session = create_download_session(timeout)   # fresh connection pool for the retry
                 continue
             else:
                 raise requests.RequestException(f'Failed to connect to {url} after {max_retries} attempts: {e}')
         except requests.RequestException as e:
+            session.close()
+            # 416 for a range starting at the end of the file: the file is already complete
+            reply = getattr(e, 'response', None)
+            if (reply is not None and reply.status_code == 416 and downloaded_size
+                    and reply.headers.get('Content-Range', '').endswith(f'/{downloaded_size}')):
+                return destination
             raise requests.RequestException(f'Failed to connect to {url}: {e}')
-        finally:
-            # Close session on each retry to ensure clean state
-            if attempt < max_retries - 1:
-                session.close()
-                session = create_download_session(timeout)
 
     # Get total size from Content-Length header or use expected_size
     content_length = response.headers.get('content-length', '0')
@@ -213,9 +224,6 @@ def download_file(
     if expected_size is not None:
         # Use expected_size as authoritative total
         total_size = expected_size
-        if content_length == 0:
-            # If no Content-Length, estimate remaining bytes
-            remaining = max(0, expected_size - downloaded_size)
     else:
         # No expected_size, estimate from Content-Length
         if content_length > 0:
@@ -235,7 +243,6 @@ def download_file(
         return destination
 
     # Download with progress callback
-    start_time = time.time()
     bytes_downloaded = downloaded_size
 
     try:
@@ -265,7 +272,7 @@ def download_file(
         # Transient network error during download - file can be resumed
         print(f'\n  ⚠ Download interrupted: {type(e).__name__}')
         print(f'  Downloaded {bytes_downloaded / (1024**2):.0f} MB so far')
-        print(f'  Restart this cell to resume from where it stopped.')
+        print(f'  Run the installer again to resume from where it stopped.')
         raise requests.RequestException(f'Download interrupted after {bytes_downloaded / (1024**2):.0f} MB: {e}')
     except IOError as e:
         session.close()
@@ -274,8 +281,8 @@ def download_file(
         # Always close the session
         session.close()
 
-    elapsed = time.time() - start_time
-    speed_mbps = (bytes_downloaded / (1024 ** 2)) / elapsed if elapsed > 0 else 0
+    if expected_size is not None and bytes_downloaded < expected_size - _SIZE_TOLERANCE:
+        raise IOError(f'Download incomplete: {bytes_downloaded} of {expected_size} bytes (run again to resume)')
 
     return destination
 
@@ -327,6 +334,8 @@ def _download_file_stdlib(
         request = Request(url, headers=headers)
         try:
             with urlopen(request, timeout=timeout) as response:
+                if downloaded_size and getattr(response, 'status', 206) == 200:
+                    downloaded_size, mode = 0, 'wb'       # range ignored: the whole file follows
                 content_length = response.headers.get('content-length', '0')
                 try:
                     content_length = int(content_length)
@@ -358,6 +367,8 @@ def _download_file_stdlib(
                             display_downloaded = min(bytes_downloaded, total_size) if total_size > 0 else bytes_downloaded
                             progress_callback(display_downloaded, total_size)
 
+                if expected_size is not None and bytes_downloaded < expected_size - _SIZE_TOLERANCE:
+                    raise IOError(f'Download incomplete: {bytes_downloaded} of {expected_size} bytes')   # retried, resuming
                 return destination
         except (HTTPError, URLError, TimeoutError, OSError, IOError) as e:
             last_error = e
@@ -392,7 +403,7 @@ def _download_file_curl(
         '--retry-delay', '2',
         '--retry-all-errors',
         '--connect-timeout', str(timeout),
-        '--max-time', str(timeout * 20),
+        '--speed-limit', '1024', '--speed-time', '120',     # give up on a stalled transfer, not on a slow one
         '-A', 'NSDDD-v3-Installer/1.0',
         '-o', str(destination),
         url,

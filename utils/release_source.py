@@ -39,7 +39,9 @@ class ReleaseClient:
         for asset in self.list_bitstreams():
             if asset.get('name') == filename:
                 size = int(asset.get('size', 0))
+                digest = asset.get('digest') or ''         # GitHub's own 'sha256:<hex>' for the uploaded asset
                 return {'name': filename, 'size_bytes': size, 'size_mb': round(size / 1024 ** 2, 2),
-                        'download_url': asset['browser_download_url']}
+                        'download_url': asset['browser_download_url'],
+                        'sha256': digest[len('sha256:'):] if digest.startswith('sha256:') else None}
         names = ', '.join(a.get('name', '') for a in self.list_bitstreams())
         raise FileNotFoundError(f'"{filename}" is not in the data release {self.tag}. Available: {names}')

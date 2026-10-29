@@ -7,6 +7,8 @@ Run this script once to download and install the dataset:
 Then double-click Launch.command (Mac) or Launch.vbs (Windows) to start.
 """
 
+from __future__ import annotations   # lets an old Python reach the version check below instead of failing on annotations
+
 import json
 import os
 import platform
@@ -39,8 +41,8 @@ from utils.datashare import DataShareClient
 from utils.release_source import ReleaseClient
 from utils.download import download_file, check_disk_space, calculate_total_size
 from utils.extract import extract_with_progress
-from utils.setup import create_directory_structure, validate_installation_directory
-from utils.verify import verify_directory
+from utils.setup import create_directory_structure
+from utils.verify import calculate_sha256
 
 
 # ---------------------------------------------------------------------------
@@ -487,6 +489,18 @@ def _is_already_extracted(spec: dict, install_dir: Path) -> bool:
     return False
 
 
+def _expected_sha256(filename: str, file_info: dict, manifest) -> str | None:
+    """The published SHA-256 of a data file: from the release's data_version.json, else GitHub's digest of the asset."""
+    entry = ((manifest or {}).get('files') or {}).get(filename) or {}
+    return entry.get('sha256') or file_info.get('sha256')
+
+
+def _remove_extracted(spec: dict, extract_to: Path):
+    """After a failed extraction, remove the files the skip test looks for, so the next run unpacks the archive again."""
+    for name in spec.get('expected_files', []) + [n for group in spec.get('expected_any', []) for n in group]:
+        (extract_to / name).unlink(missing_ok=True)
+
+
 def _download_encoder(install_dir: Path, venv_py: Path):
     """Verify the Qwen3-Embedding-0.6B encoder is present (v4.0: hosted on DataShare as encoder_model.zip,
     extracted to model/qwen3-embedding-0.6b/ — no HuggingFace pull at install)."""
@@ -608,6 +622,12 @@ def main():
         print('Please check your internet connection and run the installer again.')
         sys.exit(1)
 
+    # The data release lists every archive's SHA-256 (data_version.json); each download is checked against it before
+    # it is unpacked, and only checked archives are recorded as installed.
+    import data_update
+    manifest = data_update.fetch_manifest() if DATA_SOURCE == 'github' else None
+    verified = {}
+
     # Create directory structure
     dirs = create_directory_structure(str(install_dir))
     downloads_dir = dirs['downloads']
@@ -630,6 +650,9 @@ def main():
             file_info = client.get_file_info(filename)
             url = file_info['download_url']
             expected_bytes = file_info['size_bytes']
+            expected_sha = _expected_sha256(filename, file_info, manifest)
+            if DATA_SOURCE == 'github' and not expected_sha:
+                raise ValueError('no published SHA-256 to check it against')
         except Exception as e:
             print(f'  ✗ Could not resolve {filename}: {e}')
             (failed_soft if spec.get('soft') else failed_required).append(filename)
@@ -650,11 +673,21 @@ def main():
                 expected_size=expected_bytes,
                 progress_callback=_progress_bar,
             )
-            print(' ✓')
         except Exception as e:
             print(f'\n  ✗ Download failed: {e}')
             (failed_soft if spec.get('soft') else failed_required).append(filename)
             continue
+        if expected_sha:
+            actual_sha = calculate_sha256(dest, chunk_size=1 << 20)
+            if actual_sha != expected_sha:
+                print(f'\n  ✗ {filename} does not match its published SHA-256 and was deleted; run the installer again.')
+                dest.unlink(missing_ok=True)
+                (failed_soft if spec.get('soft') else failed_required).append(filename)
+                continue
+            verified[filename] = actual_sha
+            print(' ✓ (checked)')
+        else:
+            print(' ✓ (no published checksum)')
 
         # Extract
         extract_to = install_dir / spec['extract_to'].rstrip('/')
@@ -667,6 +700,9 @@ def main():
                 dest.unlink(missing_ok=True)
             except Exception as e:
                 print(f'\n  ✗ Extraction failed: {e}')
+                dest.unlink(missing_ok=True)              # a damaged or partly unpacked archive must not block the next run
+                _remove_extracted(spec, extract_to)
+                verified.pop(filename, None)
                 (failed_soft if spec.get('soft') else failed_required).append(filename)
         else:
             # Plain file — just move to destination
@@ -718,11 +754,13 @@ def main():
 
     # Write config and make launcher executable
     _write_install_config(install_dir, venv_py)
-    try:
-        import data_update
-        data_update.record_current(install_dir)      # which data version this copy holds, for later data updates
-    except Exception:
-        pass
+    try:      # which data version this copy holds, for later data updates
+        checked = {n: h for n, h in verified.items() if n in data_update.TARGETS}
+        if not data_update.record_current(install_dir, verified=checked, manifest=manifest) and \
+                not (install_dir / data_update.STATE).exists():
+            print('  ⚠ The data version could not be recorded; NSDDD will check for new data when it starts.')
+    except Exception as e:
+        print(f'  ⚠ The data version could not be recorded ({e}); NSDDD will check for new data when it starts.')
     _make_launcher_executable()
 
     print()

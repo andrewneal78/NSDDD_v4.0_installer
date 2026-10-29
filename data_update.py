@@ -291,12 +291,20 @@ def apply(app_dir, manifest, changed, log=print):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def record_current(data_dir):
-    """After a fresh install: note which data version was just downloaded (best effort; never replaces a record)."""
+def record_current(data_dir, verified=None, manifest=None):
+    """After a fresh install: note which data version was just downloaded (never replaces a record).
+
+    verified: {zip name: SHA-256} of the archives this install checked. The version is recorded only when every one
+    of them matches `manifest` (the one the install checked against); otherwise nothing is written, and the next start
+    treats the data as the baseline and updates it. Returns True when a record was written."""
     data_dir = Path(data_dir)
     if (data_dir / STATE).exists():
-        return
-    m = fetch_manifest()
-    if m:
-        files = {n: i.get('sha256') for n, i in m['files'].items() if n in TARGETS and n != 'viewer_pages.zip'}
-        write_state(data_dir, m['data_version'], files, m.get('notes', ''))
+        return False
+    m = manifest or fetch_manifest()
+    if not m:
+        return False
+    published = {n: i.get('sha256') for n, i in m['files'].items() if n in TARGETS and n != 'viewer_pages.zip'}
+    if verified is not None and any(published.get(n) != h for n, h in verified.items()):
+        return False
+    write_state(data_dir, m['data_version'], dict(published, **(verified or {})), m.get('notes', ''))
+    return True
