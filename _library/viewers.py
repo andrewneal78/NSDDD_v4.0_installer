@@ -4,6 +4,7 @@ Existing supplied viewers are preserved. Generation streams one document at a ti
 """
 import json
 import sqlite3
+from contextlib import closing
 from html import escape
 from pathlib import Path
 
@@ -21,7 +22,7 @@ def ensure_viewers(model_dir, destination):
     docs = json.loads((model_dir / 'documents_dict.json').read_text(encoding='utf-8'))
     align = json.loads((model_dir / 'alignment_dict.json').read_text(encoding='utf-8'))
     created = 0
-    with sqlite3.connect((model_dir / 'segments.sqlite').resolve().as_uri() + '?mode=ro', uri=True) as con:
+    with closing(sqlite3.connect((model_dir / 'segments.sqlite').resolve().as_uri() + '?mode=ro', uri=True)) as con:
         original_docs = {r[0] for r in con.execute("SELECT DISTINCT doc FROM seg WHERE id LIKE '%/o/%'")}
         for doc, info in docs.items():
             if not str(doc).isdigit():

@@ -100,12 +100,12 @@ def test_intel_mac_uses_its_own_constraints(monkeypatch):
     assert install._constraints_name() == 'constraints-intel-mac.txt'
     monkeypatch.setattr(install.platform, 'machine', lambda: 'arm64')
     assert install._constraints_name() == 'constraints.txt'
-    assert 'torch==2.2.2' in (ROOT / 'constraints-intel-mac.txt').read_text()
+    assert 'torch==2.2.2' in (ROOT / 'constraints-intel-mac.txt').read_text(encoding='utf-8')
 
 
 def _dedupe_namespace():
     import json
-    nb = json.loads((ROOT / 'document_metadata_search_voila.ipynb').read_text())
+    nb = json.loads((ROOT / 'document_metadata_search_voila.ipynb').read_text(encoding='utf-8'))
     src = next(''.join(c['source']) for c in nb['cells'] if 'def dedupe_pair_matches' in ''.join(c['source']))
     start, end = src.index('def dedupe_pair_matches'), src.index('def _count_once')
     ns = {'MIN_ALIGN_SIM': 0.70, 'MODEL_DICT': {'alignment_dict': {

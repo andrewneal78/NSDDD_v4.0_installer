@@ -8,6 +8,7 @@ import tempfile
 import types
 import unittest
 import zipfile
+from contextlib import closing
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def notebook_cell(index, **namespace):
-    nb = json.loads((ROOT / 'document_metadata_search_voila.ipynb').read_text())
+    nb = json.loads((ROOT / 'document_metadata_search_voila.ipynb').read_text(encoding='utf-8'))
     src = ''.join(l for l in nb['cells'][index]['source'] if not l.lstrip().startswith('%'))
     exec(compile(src, '<notebook>', 'exec', __future__.annotations.compiler_flag), namespace)
     return namespace
@@ -82,7 +83,7 @@ class InstallationTests(unittest.TestCase):
             model = Path(tmp) / 'model'; model.mkdir(); dest = Path(tmp) / 'XHR'
             (model / 'documents_dict.json').write_text(json.dumps({'1': {'name': '<Document>'}}))
             (model / 'alignment_dict.json').write_text(json.dumps({'1': [[['1/o/1'], ['1/1'], .9]]}))
-            with sqlite3.connect(model / 'segments.sqlite') as con:
+            with closing(sqlite3.connect(model / 'segments.sqlite')) as con, con:
                 con.execute('CREATE TABLE seg(id TEXT, text TEXT, doc TEXT, row INTEGER)')
                 con.executemany('INSERT INTO seg VALUES (?,?,?,?)', [('1/1','English <text>','1',0), ('1/o/1','Original & text','1',1)])
             self.assertEqual(ensure_viewers(model, dest), 3)
@@ -106,14 +107,14 @@ class InstallationTests(unittest.TestCase):
             (model/'index.bin').write_bytes(b'0'*8);np.save(model/'short_mask.npy',np.zeros(2,dtype=bool))
             (metadata/'document_metadata.csv').write_text('File prefix\n1\n')
             (metadata/'Country_metadata.csv').write_text('iso\nFRA\n')
-            with sqlite3.connect(model/'segments.sqlite') as con:
+            with closing(sqlite3.connect(model/'segments.sqlite')) as con, con:
                 con.execute('CREATE TABLE seg(id TEXT, doc TEXT, row INTEGER)')
                 con.executemany('INSERT INTO seg VALUES (?,?,?)',[('1/1','1',0),('1/2','1',1)])
             self.assertEqual(validate_data(base, require_encoder=False),[])
             (model/'index.bin').write_bytes(b'0'*7)
             self.assertIn('embedding index has the wrong byte length',validate_data(base,require_encoder=False))
             (model/'index.bin').write_bytes(b'0'*8)
-            with sqlite3.connect(model/'segments.sqlite') as con:
+            with closing(sqlite3.connect(model/'segments.sqlite')) as con, con:
                 con.execute("UPDATE seg SET id='1/9' WHERE row=1")
             self.assertIn('SQLite row ordering differs from encoded segment IDs',validate_data(base,require_encoder=False))
 
@@ -144,7 +145,7 @@ class InstallationTests(unittest.TestCase):
     def test_offline_version_check_does_not_request_network(self):
         from unittest.mock import patch
         # Execute only version helpers; path loading requires installed CSVs.
-        nb=json.loads((ROOT/'document_metadata_search_voila.ipynb').read_text());src=''.join(nb['cells'][1]['source'])
+        nb=json.loads((ROOT/'document_metadata_search_voila.ipynb').read_text(encoding='utf-8'));src=''.join(nb['cells'][1]['source'])
         src=src[src.index('def check_notebook_update'):src.index('def build_update_banner_html')]
         ns={'os':os, '_read_local_version':lambda:'test'}
         exec(compile(src,'<update>','exec',__future__.annotations.compiler_flag),ns)

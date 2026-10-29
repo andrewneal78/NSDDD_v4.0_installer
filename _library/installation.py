@@ -2,6 +2,7 @@
 import csv
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 
@@ -40,7 +41,7 @@ def validate_data(base, require_encoder=True):
         topics = model / 'topic_of_row.npy'
         if topics.exists() and np.load(topics, mmap_mode='r').shape != (len(ids),):
             errors.append('topic index row count is incorrect')
-        with sqlite3.connect((model / 'segments.sqlite').resolve().as_uri() + '?mode=ro', uri=True) as con:
+        with closing(sqlite3.connect((model / 'segments.sqlite').resolve().as_uri() + '?mode=ro', uri=True)) as con:   # closed, so Windows can replace the file
             if con.execute('PRAGMA quick_check').fetchone()[0] != 'ok':
                 errors.append('SQLite integrity check failed')
             if con.execute('SELECT COUNT(*) FROM seg').fetchone()[0] != len(ids):
