@@ -519,11 +519,13 @@ def ensure_widget_comms_ok(py: str) -> None:
     in voila ("Shared module @jupyterlab/statusbar doesn't exist"), which leaves all widgets
     (incl. the Search buttons) unresponsive. Best-effort + idempotent."""
     # Scope changes to this app and avoid repeating JupyterLab subprocesses.
-    from importlib.util import find_spec
-    if find_spec('jupyter_collaboration') is None and find_spec('jupyter_docprovider') is None:
-        return
     marker = Path(os.environ['JUPYTER_CONFIG_DIR']) / 'widget_comms_fixed'
     if marker.exists():
+        return
+    # Ask the interpreter that runs Voila, which may not be the one running this launcher.
+    probe = ("import sys; from importlib.util import find_spec as f; "
+             "sys.exit(0 if f('jupyter_collaboration') or f('jupyter_docprovider') else 1)")
+    if subprocess.run([py, "-c", probe], capture_output=True).returncode != 0:
         return
     marker.parent.mkdir(parents=True, exist_ok=True)
     for ext in ("@jupyter/docprovider-extension", "@jupyter/collaboration-extension"):

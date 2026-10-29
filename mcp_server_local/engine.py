@@ -98,6 +98,7 @@ def load_namespace() -> Dict[str, Any]:
 
 def ensure_loaded(semantic=True) -> Dict[str, Any]:
     """Load data first; keyword/Boolean operations do not load the encoder."""
+    global _model_ready
     ns = load_namespace()
     with _lock:
         with redirect_stdout(sys.stderr):
@@ -106,6 +107,7 @@ def ensure_loaded(semantic=True) -> Dict[str, Any]:
             raise RuntimeError(f"Model failed to load: {ns.get('MODEL_LOAD_ERROR')}")
         if semantic and encoder is None:
             raise RuntimeError(f"Encoder failed to load: {ns.get('ENCODER_LOAD_ERROR')}")
+        _model_ready = True              # reported by the HTTP API's / and /health
     return ns
 
 

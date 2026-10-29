@@ -661,6 +661,8 @@ def main():
             continue
 
         dest = downloads_dir / filename
+        if expected_bytes:
+            size_mb = expected_bytes / 1024 ** 2          # the release's own figure, not the estimate in config.py
         size_str = (
             f'{size_mb / 1024:.1f} GB' if size_mb >= 1024
             else f'{size_mb:.0f} MB' if size_mb >= 1

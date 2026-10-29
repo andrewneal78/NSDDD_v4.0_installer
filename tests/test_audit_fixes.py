@@ -234,3 +234,32 @@ def test_old_python_gets_the_friendly_version_message():
         pytest.skip('system Python is new enough')
     assert out.returncode == 0, out.stderr
     assert 'requires Python 3.11 or 3.12' in out.stdout and 'refused' in out.stdout
+
+
+# --------------------------------------------------------------------------- L1, L3, L9
+def test_health_reports_the_model_once_loaded(monkeypatch):
+    from mcp_server_local import engine
+    monkeypatch.setattr(engine, '_model_ready', False)
+    monkeypatch.setattr(engine, 'load_namespace', lambda: {'initialize_model': lambda load_encoder: ({}, object())})
+    engine.ensure_loaded()
+    assert engine._model_ready is True
+
+
+def test_widget_comms_check_asks_the_voila_interpreter(monkeypatch, tmp_path):
+    import launch
+    monkeypatch.setenv('JUPYTER_CONFIG_DIR', str(tmp_path))
+    calls = []
+    monkeypatch.setattr(launch.subprocess, 'run', lambda cmd, **kw: calls.append(cmd) or types.SimpleNamespace(returncode=1))
+    launch.ensure_widget_comms_ok('/path/to/voila/python')
+    assert calls and calls[0][0] == '/path/to/voila/python'
+
+
+def test_csv_export_neutralises_spreadsheet_formulas():
+    import ast, json as _json
+    nb = _json.loads((ROOT / 'document_metadata_search_voila.ipynb').read_text(encoding='utf-8'))
+    src = next(''.join(c['source']) for c in nb['cells'] if 'def _csv_safe' in ''.join(c['source']))
+    fn = next(n for n in ast.parse(src.replace('%%capture', '', 1)).body if getattr(n, 'name', '') == '_csv_safe')
+    ns = {}
+    exec(compile(ast.Module([fn], []), 'csv_safe', 'exec'), ns)
+    rows = ns['_csv_safe']([['=HYPERLINK("x")', '-bullet', '@SUM', 'plain', 0.75, None]])
+    assert rows == [["'=HYPERLINK(\"x\")", "'-bullet", "'@SUM", 'plain', 0.75, None]]

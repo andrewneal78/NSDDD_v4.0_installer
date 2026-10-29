@@ -33,8 +33,8 @@ DOWNLOADS = {
     # REQUIRED downloads (essential for semantic search)
     'model_files': {
         'filename': 'model_files.zip',
-        'size_mb': 715.0,
-        'size_gb': 0.70,
+        'size_mb': 787.5,           # data version 2026.10.16.1; install.py shows the release's actual size when downloading
+        'size_gb': 0.77,
         'extract_to': 'model/',
         'expected_files': [
             'countries_dict.json',
@@ -66,7 +66,7 @@ DOWNLOADS = {
             'tokenizer.json',
         ],
         'expected_any': [
-            ['pytorch_model.bin', 'model.safetensors'],
+            ['model.safetensors'],     # as _library/installation.validate_data requires (safetensors loads without pickle)
         ],
         'required': True,
         'description': 'Local Qwen3-Embedding-0.6B multilingual encoder (bfloat16); avoids a HuggingFace pull at install'
