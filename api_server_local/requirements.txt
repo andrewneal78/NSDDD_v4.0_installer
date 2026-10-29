@@ -1,6 +1,4 @@
-# Extra dependencies for the local FastAPI server (api_server_local).
-# Not part of the public NSDDD installer (requirements.txt at the repo root).
-# The core search stack (torch, sentence-transformers, numpy, pandas, …) is
-# already provided by the installer's .venv.
-fastapi>=0.110
-uvicorn>=0.29
+# Extra dependencies for the local FastAPI server (api_server_local). The list is kept in one place, the
+# repository root's requirements-api.txt; install it with the root constraints, from the installer folder:
+#   .venv/bin/python -m pip install -r requirements-api.txt -c constraints.txt
+-r ../requirements-api.txt

@@ -147,11 +147,7 @@ RAM_RECOMMENDED_GB = 16          # comfortable alongside other work
 # Installation directory naming
 DEFAULT_INSTALL_DIR = 'NSDDD_v4.0_workspace'
 
-# Dependencies (from requirements.txt)
-CORE_DEPENDENCIES = ['torch==2.9.1', 'transformers==4.53.2', 'sentence-transformers==4.1.0', 'huggingface_hub==0.36.2', 'tokenizers==0.21.4', 'safetensors==0.5.3', 'numpy==2.0.2', 'scipy==1.17.1', 'scikit-learn==1.6.1', 'pandas==2.2.3', 'networkx==3.2.1', 'matplotlib==3.10.8', 'seaborn==0.13.2', 'ipywidgets==8.1.5', 'ipykernel==6.29.5', 'jupyter_core==5.7.2', 'jupyter_server==2.16.0', 'nbconvert==7.16.6', 'voila==0.5.11', 'tqdm==4.67.1', 'requests==2.32.3', 'psutil==7.2.1']
-# Optional dependencies for future extensions
-OPTIONAL_DEPENDENCIES = [
-]
+# Dependencies: requirements.txt and constraints*.txt are the only lists (install.py reads them).
 
 # Download and verification settings
 CHUNK_SIZE = 8192  # Bytes per chunk for downloads
