@@ -4,6 +4,8 @@ Edinburgh DataShare REST API Client
 Module for interacting with Edinburgh DataShare API to list and retrieve files.
 """
 
+from __future__ import annotations
+
 from typing import List, Dict, Optional
 import json
 import subprocess

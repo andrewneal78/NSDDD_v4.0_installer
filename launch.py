@@ -8,6 +8,8 @@ NSDDD v4.0 Installer launcher.
     then downloads and overlays the latest repo zip while preserving user data.
 """
 
+from __future__ import annotations   # 'str | None' annotations must not stop an older Python before it can say so
+
 import argparse
 import json
 import os
@@ -100,8 +102,6 @@ def find_python():
             [
                 cwd / ".venv" / "Scripts" / "python.exe",
                 cwd / "venv" / "Scripts" / "python.exe",
-                Path.home() / ".venv" / "Scripts" / "python.exe",
-                Path.home() / "venv" / "Scripts" / "python.exe",
             ]
         )
     else:
@@ -109,8 +109,6 @@ def find_python():
             [
                 cwd / ".venv" / "bin" / "python3",
                 cwd / "venv" / "bin" / "python3",
-                Path.home() / ".venv" / "bin" / "python3",
-                Path.home() / "venv" / "bin" / "python3",
             ]
         )
 

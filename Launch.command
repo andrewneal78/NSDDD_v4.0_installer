@@ -1,16 +1,20 @@
 #!/bin/bash
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 
 
-# Resolve Python: prefer install_config.json, then local .venv, then system python3
-if [ -f "install_config.json" ]; then
-    PYTHON=$(python3 -c "import json; print(json.load(open('install_config.json')).get('python',''))" 2>/dev/null)
-fi
-if [ -z "$PYTHON" ] || [ ! -f "$PYTHON" ]; then
-    if [ -f ".venv/bin/python3" ]; then
+# Resolve Python: the one recorded in install_config.json, then the local .venv, then python3 on the PATH.
+# install_config.json is read with the installer's own environment, never the system python3: on a Mac without
+# Apple's developer tools /usr/bin/python3 is only a stub that asks to install them.
+PYTHON=""
+for reader in ".venv/bin/python3" ".nsddd_python/bin/python3"; do
+    if [ -x "$reader" ] && [ -f "install_config.json" ]; then
+        PYTHON=$("$reader" -c "import json; print(json.load(open('install_config.json')).get('python',''))" 2>/dev/null)
+        break
+    fi
+done
+if [ -z "$PYTHON" ] || [ ! -x "$PYTHON" ]; then
+    if [ -x ".venv/bin/python3" ]; then
         PYTHON=".venv/bin/python3"
-    elif [ -f "$HOME/.venv/bin/python3" ]; then
-        PYTHON="$HOME/.venv/bin/python3"
     else
         PYTHON="python3"
     fi

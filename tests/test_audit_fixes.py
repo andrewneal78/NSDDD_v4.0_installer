@@ -180,3 +180,57 @@ def test_data_version_is_recorded_only_from_matching_archives(tmp_path):
     assert not (tmp_path / du.STATE).exists()
     assert du.record_current(tmp_path, verified={'metadata.zip': 'a' * 64}, manifest=manifest)
     assert du.read_state(tmp_path) == ('2099.01.01.1', {'metadata.zip': 'a' * 64})
+
+
+# --------------------------------------------------------------------------- M4, M5, M7: the installer's own choices
+import subprocess, types
+
+
+def test_install_path_expands_home_and_resolves_against_the_installer(monkeypatch):
+    import install
+    monkeypatch.setattr('builtins.input', lambda prompt='': '~/NSDDD_data')
+    assert install._prompt_install_dir() == (Path.home() / 'NSDDD_data').resolve()
+    monkeypatch.setattr('builtins.input', lambda prompt='': 'elsewhere')
+    assert install._prompt_install_dir() == (install.REPO_ROOT / 'elsewhere').resolve()
+
+
+def test_failed_pip_install_stops_the_installer(monkeypatch, tmp_path):
+    import install
+    monkeypatch.setattr(install, '_prompt_venv', lambda: tmp_path / 'python3')
+    monkeypatch.setattr(install.platform, 'system', lambda: 'Darwin')
+    calls = []
+
+    def run(cmd, **kw):
+        calls.append(cmd)
+        return types.SimpleNamespace(returncode=1, stdout='', stderr='ERROR: No matching distribution')
+    monkeypatch.setattr(install.subprocess, 'run', run)
+    with pytest.raises(SystemExit):
+        install._install_dependencies()
+    assert len(calls) == 1 and '-r' in calls[0]          # nothing further was attempted
+
+
+def test_home_folder_environments_are_not_offered(monkeypatch, tmp_path):
+    import install
+    monkeypatch.delenv('VIRTUAL_ENV', raising=False)
+    monkeypatch.setattr(install, 'REPO_ROOT', tmp_path)
+    looked_at = []
+    monkeypatch.setattr(install, '_python_exe', lambda d: looked_at.append(d) or d / 'missing')
+    install._find_existing_venvs()
+    assert all(str(d).startswith(str(tmp_path)) for d in looked_at)
+
+
+OLD_PYTHON = Path('/usr/bin/python3')
+
+
+@pytest.mark.skipif(not OLD_PYTHON.exists(), reason='no system Python to test with')
+def test_old_python_gets_the_friendly_version_message():
+    code = ('import sys; sys.path.insert(0, sys.argv[1]); import install, launch; '
+            'print("supported" if install._check_python() else "refused")')
+    out = subprocess.run([str(OLD_PYTHON), '-I', '-c', code, str(ROOT)], capture_output=True, text=True,
+                         env={'PYTHONDONTWRITEBYTECODE': '1'})
+    version = subprocess.run([str(OLD_PYTHON), '-c', 'import sys; print(sys.version_info[:2] < (3, 11))'],
+                             capture_output=True, text=True).stdout.strip()
+    if version != 'True':
+        pytest.skip('system Python is new enough')
+    assert out.returncode == 0, out.stderr
+    assert 'requires Python 3.11 or 3.12' in out.stdout and 'refused' in out.stdout

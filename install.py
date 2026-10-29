@@ -209,8 +209,12 @@ def _prompt_install_dir() -> Path:
     default = REPO_ROOT / DEFAULT_INSTALL_DIR
     print()
     print('Press Enter to accept the default location, or type a different folder path.')
-    raw = input(f'Install directory [{default}]: ').strip()
-    chosen = Path(raw) if raw else default
+    raw = input(f'Install directory [{default}]: ').strip().strip('"\'')    # a dragged-in folder may arrive quoted
+    chosen = Path(raw).expanduser() if raw else default         # '~/NSDDD' must not become a folder named '~'
+    if not chosen.is_absolute():
+        chosen = REPO_ROOT / chosen                              # relative to the installer, as the default is
+    chosen = chosen.resolve()
+    print(f'  Data will be installed in: {chosen}')
     return chosen
 
 
@@ -222,10 +226,14 @@ def _python_exe(venv_dir: Path) -> Path:
     return venv_dir / 'bin' / 'python3'
 
 
+_SUPPORTED_PYTHON = 'import sys; sys.exit(0 if sys.version_info[:2] in ((3, 11), (3, 12)) and sys.maxsize > 2**32 else 1)'
+
+
 def _find_existing_venvs() -> list:
     """
-    Return list of (label, python_path) tuples for venvs that exist and have voila.
-    Checks: currently active venv, common locations relative to repo and home.
+    Return list of (label, python_path, has_voila) tuples for supported (64-bit Python 3.11/3.12) venvs.
+    Checks the currently active venv and the installer folder only: environments in the home folder are usually
+    shared with other work, and installing this release's pinned packages there would change them.
     """
     found = []
     seen = set()
@@ -237,12 +245,10 @@ def _find_existing_venvs() -> list:
     if active:
         candidates.append(('Currently active venv', Path(active)))
 
-    # Common locations
+    # Locations inside the installer folder
     candidates += [
         ('Repo .venv',  REPO_ROOT / '.venv'),
         ('Repo venv',   REPO_ROOT / 'venv'),
-        ('~/.venv',     Path.home() / '.venv'),
-        ('~/venv',      Path.home() / 'venv'),
     ]
 
     for label, venv_dir in candidates:
@@ -251,6 +257,9 @@ def _find_existing_venvs() -> list:
         if not py.exists() or key in seen:
             continue
         seen.add(key)
+        if subprocess.run([str(py), '-c', _SUPPORTED_PYTHON], capture_output=True).returncode != 0:
+            print(f'  – Not offering {py}: it is not a 64-bit Python 3.11 or 3.12')
+            continue
         # Check voila is importable
         result = subprocess.run(
             [str(py), '-c', 'import voila'],
@@ -302,9 +311,13 @@ def _prompt_venv() -> Path:
 
     if choice == new_idx:
         return None  # Caller will create new venv
-    else:
-        _, py, _ = existing[choice - 1]
-        return py
+    label, py, _ = existing[choice - 1]
+    if not Path(py).resolve().is_relative_to(REPO_ROOT.resolve()):
+        print(f'  ⚠ {label} is outside the installer folder. Installing will replace some of its packages with the')
+        print('    versions this release is tested with, which can affect other programs that use it.')
+        if input('    Use it anyway? [y/N]: ').strip().lower() not in ('y', 'yes'):
+            return None
+    return py
 
 
 def _install_dependencies() -> Path:
@@ -339,7 +352,8 @@ def _install_dependencies() -> Path:
         print(f'  ✓ Using {venv_py}')
 
     if platform.system() == 'Linux':
-        result = subprocess.run([str(venv_py), '-m', 'pip', 'install', 'torch==2.9.1',
+        # CPU-only PyTorch; --no-deps so that its dependencies come from the pinned install below, under the constraints
+        result = subprocess.run([str(venv_py), '-m', 'pip', 'install', '--no-deps', 'torch==2.9.1',
                                  '--index-url', 'https://download.pytorch.org/whl/cpu'])
         if result.returncode:
             sys.exit('CPU PyTorch installation failed')
@@ -352,31 +366,13 @@ def _install_dependencies() -> Path:
             capture_output=True, text=True,
         )
         if result.returncode != 0:
-            print('  ⚠ pip install reported errors:')
-            for line in result.stderr.splitlines()[-5:]:
+            print('  ✗ Installing the Python packages failed:')
+            for line in result.stderr.splitlines()[-15:]:
                 print(f'    {line}')
-        else:
-            print('  ✓ Dependencies installed')
+            sys.exit('Fix the error above (often the internet connection or an unsupported Python), then run the installer again.')
+        print('  ✓ Dependencies installed')
     else:
-        print('  ⚠ requirements.txt not found — skipping')
-
-    # Install voila
-    result = subprocess.run(
-        [str(venv_py), '-c', 'import voila'],
-        capture_output=True,
-    )
-    if result.returncode != 0:
-        print('  Installing voila...')
-        result = subprocess.run(
-            [str(venv_py), '-m', 'pip', 'install', 'voila'],
-            capture_output=True, text=True,
-        )
-        if result.returncode == 0:
-            print('  ✓ voila installed')
-        else:
-            print('  ⚠ voila install failed — install manually: pip install voila')
-    else:
-        print('  ✓ voila already installed')
+        sys.exit('requirements.txt is missing from the installer folder; download the installer again.')
 
     required_imports = [
         ('voila', 'voila'),
@@ -388,7 +384,13 @@ def _install_dependencies() -> Path:
         ('tqdm', 'tqdm'),
         ('requests', 'requests'),
         ('torch', 'torch'),
+        ('transformers', 'transformers'),
         ('sentence-transformers', 'sentence_transformers'),
+        ('scipy', 'scipy'),
+        ('scikit-learn', 'sklearn'),
+        ('networkx', 'networkx'),
+        ('rapidfuzz', 'rapidfuzz'),
+        ('psutil', 'psutil'),
     ]
 
     missing = []
