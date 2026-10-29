@@ -283,3 +283,24 @@ def test_vc_runtime_is_run_only_when_powershell_reports_a_microsoft_signature(mo
         raise FileNotFoundError('powershell')
     monkeypatch.setattr(install.subprocess, 'run', missing)
     assert install._signed_by_microsoft(tmp_path / 'vc.exe') is False
+
+
+# --------------------------------------------------------------------------- M6
+def test_only_one_launch_updates_at_a_time(tmp_path):
+    import launch
+    with launch.update_lock(tmp_path) as first:
+        with launch.update_lock(tmp_path) as second:
+            assert first is True and second is False
+    assert not (tmp_path / launch.UPDATE_LOCK).exists()
+    with launch.update_lock(tmp_path) as again:
+        assert again is True
+
+
+def test_a_stale_lock_from_a_crashed_launch_expires(tmp_path):
+    import launch
+    lock = tmp_path / launch.UPDATE_LOCK
+    lock.write_text('1234')
+    old = lock.stat().st_mtime - launch.UPDATE_LOCK_STALE_SECONDS - 60
+    os.utime(lock, (old, old))
+    with launch.update_lock(tmp_path) as acquired:
+        assert acquired is True

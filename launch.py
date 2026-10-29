@@ -24,6 +24,7 @@ import time
 import urllib.request
 import urllib.error
 import zipfile
+from contextlib import contextmanager
 from pathlib import Path
 
 HOST = "127.0.0.1"
@@ -352,6 +353,42 @@ def write_data_notice(cwd: Path, version: str, notes: str, changes: dict | None 
         pass
 
 
+UPDATE_LOCK = ".nsddd_update.lock"
+UPDATE_LOCK_STALE_SECONDS = 6 * 3600     # longer than any update; a lock left by a crashed launch expires
+
+
+@contextmanager
+def update_lock(cwd: Path):
+    """Yield True when this launch may update program files and data, False when another launch is doing so.
+    Two launches updating at once (easy on Windows, where Launch.vbs updates with no window) would share the data
+    staging folder and overlay the same files."""
+    path = cwd / UPDATE_LOCK
+    for _ in range(2):
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            try:
+                if time.time() - path.stat().st_mtime > UPDATE_LOCK_STALE_SECONDS:
+                    path.unlink()
+                    continue
+            except OSError:
+                continue
+            print("ℹ️  Another NSDDD window is installing an update; this one starts without checking for updates.")
+            yield False
+            return
+        except OSError:
+            yield True               # cannot create a lock here (read-only folder): carry on as before
+            return
+        try:
+            os.write(fd, f"{os.getpid()} {time.strftime('%Y-%m-%d %H:%M:%S')}\n".encode())
+            os.close(fd)
+            yield True
+        finally:
+            path.unlink(missing_ok=True)
+        return
+    yield False                      # the lock kept changing under us: leave updating to the other launch
+
+
 def maybe_update_data(cwd: Path, apply: bool = True) -> bool:
     """Download new documents and other data changes published on the data release. Returns True when installed.
 
@@ -552,15 +589,21 @@ def main():
 
     if args.update_only:
         before = local_version(cwd)
-        maybe_update(cwd, False, apply=True)
-        maybe_update_data(cwd, apply=True)
+        with update_lock(cwd) as may_update:
+            if may_update:
+                maybe_update(cwd, False, apply=True)
+                maybe_update_data(cwd, apply=True)
         print(f"Version before: {before or 'unknown'}; now: {local_version(cwd) or 'unknown'}")
         return
 
-    if maybe_update(cwd, args.no_update, apply=args.update):
-        restart_self()
+    with update_lock(cwd) as may_update:
+        updated = may_update and maybe_update(cwd, args.no_update, apply=args.update)
+    if updated:
+        restart_self()                           # after the lock is released: the restarted launcher takes it again
     if not args.no_data_update:
-        maybe_update_data(cwd, apply=True)       # data lives outside git, so it is always safe to update
+        with update_lock(cwd) as may_update:
+            if may_update:
+                maybe_update_data(cwd, apply=True)       # data lives outside git, so it is always safe to update
     try:
         import usage_ping                         # anonymous once-a-day start-up count; see usage_ping.py and the README
         usage_ping.ping_once_a_day(cwd, local_version(cwd))
