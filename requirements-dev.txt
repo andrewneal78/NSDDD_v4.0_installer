@@ -1,0 +1,11 @@
+# What the tests in tests/ need (they use no model and no network). Some tests execute the search notebook's
+# cells, which import IPython, ipywidgets, tqdm and SciPy. Install with the release constraints:
+#   python -m pip install -r requirements-dev.txt -c constraints.txt
+pytest==8.3.5
+numpy==2.0.2
+pandas==2.2.3
+scipy==1.17.1
+ipywidgets==8.1.5
+tqdm==4.67.1
+requests==2.32.4
+mcp==1.30.0
