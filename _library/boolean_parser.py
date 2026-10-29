@@ -139,6 +139,8 @@ class BooleanQueryParser:
                 f'"{self._tokens[self._pos]}"'
             )
 
+        if _kind(node) != 'pos':
+            raise ValueError(NOT_USAGE)
         return node
 
     # ------------------------------------------------------------------
@@ -205,6 +207,26 @@ class BooleanQueryParser:
             words.append(nxt)
             self._pos += 1
         return TermNode(' '.join(words))
+
+
+NOT_USAGE = ('NOT can only exclude terms from something else, as in "cyber AND NOT terrorism"; '
+             'a query cannot consist only of NOT terms, and NOT cannot be combined with OR')
+
+
+def _kind(node: Node) -> str:
+    """'pos' for a node that selects segments, 'neg' for one that only excludes them (NOT, or NOTs joined by AND).
+    Raises ValueError where a NOT has nothing to exclude from (under OR, or a NOT of a NOT)."""
+    if isinstance(node, TermNode):
+        return 'pos'
+    if isinstance(node, NotNode):
+        if _kind(node.operand) != 'pos':
+            raise ValueError(NOT_USAGE)
+        return 'neg'
+    if isinstance(node, AndNode):
+        return 'pos' if 'pos' in (_kind(node.left), _kind(node.right)) else 'neg'
+    if 'neg' in (_kind(node.left), _kind(node.right)):      # OrNode
+        raise ValueError(NOT_USAGE)
+    return 'pos'
 
 
 # ---------------------------------------------------------------------------

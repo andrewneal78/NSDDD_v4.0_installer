@@ -353,7 +353,7 @@ def boolean_search(query: str,
         BooleanQueryParser().parse(query)
     except Exception as e:  # noqa: BLE001
         return {'error': f'Could not parse the Boolean query: {e}',
-                'syntax': 'AND (&), OR (|), NOT (!), brackets, "exact phrase", wildcards * and ?; '
+                'syntax': 'AND (&), OR (|), NOT (!) only after AND, brackets, "exact phrase", wildcards * and ?; '
                           'example: (cyber* OR digital) AND "critical infrastructure" AND NOT terrorism'}
     with redirect_stdout(sys.stderr):
         cfg = ns['SearchConfig'](

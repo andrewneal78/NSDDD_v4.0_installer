@@ -8,7 +8,7 @@ a model dictionary using a caller-supplied keyword search function.
 from __future__ import annotations
 from typing import Callable
 
-from _library.boolean_parser import TermNode, AndNode, OrNode, NotNode, Node
+from _library.boolean_parser import TermNode, AndNode, OrNode, NotNode, Node, NOT_USAGE
 
 
 # Type alias for search results
@@ -60,8 +60,13 @@ class BooleanQueryExecutor:
 
         Returns:
             List of (segment_id, score) tuples, sorted descending by score.
+
+        Raises:
+            ValueError: If the query only excludes (NOT outside 'x AND NOT y').
         """
         result_dict = self._eval(ast)
+        if isinstance(result_dict, _Excluded):
+            raise ValueError(NOT_USAGE)
         results = sorted(result_dict.items(), key=lambda x: x[1], reverse=True)
         return results
 
@@ -86,29 +91,24 @@ class BooleanQueryExecutor:
         return dict(results)
 
     def _eval_not(self, node: NotNode) -> dict[str, float]:
-        # "All segments" means: the union of everything evaluated so far
-        # vs what the sub-expression matches.  Here we return an empty
-        # dict whose complement is computed by the parent AND/OR context.
-        # In practice, NOT at the top level returns empty (nothing to
-        # subtract from).  It is most useful as: X AND NOT Y.
-        matching = self._eval(node.operand)
-        # Caller (AndNode) subtracts these; we flag them with negative score
-        # so AND can identify them.  Use a sentinel value.
-        return {seg_id: float('-inf') for seg_id in matching}
+        # NOT is only meaningful as 'X AND NOT Y': the parent AND subtracts these segments. The _Excluded type marks
+        # them even when Y matches nothing (an empty exclusion must still leave X unchanged, not empty it).
+        return _Excluded(self._eval(node.operand))
 
     def _eval_and(self, node: AndNode) -> dict[str, float]:
         left = self._eval(node.left)
         right = self._eval(node.right)
 
-        # Handle NOT on either side: subtract rather than intersect
-        if _is_not_result(left):
-            # left is NOT expression — keep right minus left keys
-            excluded = set(left.keys())
-            return {k: v for k, v in right.items() if k not in excluded}
+        # NOT a AND NOT b excludes both
+        if isinstance(left, _Excluded) and isinstance(right, _Excluded):
+            return _Excluded({**left, **right})
 
-        if _is_not_result(right):
-            excluded = set(right.keys())
-            return {k: v for k, v in left.items() if k not in excluded}
+        # Handle NOT on either side: subtract rather than intersect
+        if isinstance(left, _Excluded):
+            return {k: v for k, v in right.items() if k not in left}
+
+        if isinstance(right, _Excluded):
+            return {k: v for k, v in left.items() if k not in right}
 
         # Standard intersection: keep only keys present in both
         common = set(left.keys()) & set(right.keys())
@@ -120,6 +120,8 @@ class BooleanQueryExecutor:
     def _eval_or(self, node: OrNode) -> dict[str, float]:
         left = self._eval(node.left)
         right = self._eval(node.right)
+        if isinstance(left, _Excluded) or isinstance(right, _Excluded):
+            raise ValueError(NOT_USAGE)
 
         merged: dict[str, float] = dict(left)
         for seg_id, score in right.items():
@@ -138,9 +140,8 @@ class BooleanQueryExecutor:
         return a + b
 
 
-def _is_not_result(d: dict[str, float]) -> bool:
-    """Return True if dict represents a NOT result (all values are -inf)."""
-    return bool(d) and all(v == float('-inf') for v in d.values())
+class _Excluded(dict):
+    """Segments matched by a NOT operand, to be subtracted by the enclosing AND."""
 
 
 # ---------------------------------------------------------------------------

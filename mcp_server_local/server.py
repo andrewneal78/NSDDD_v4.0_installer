@@ -155,8 +155,8 @@ async def list_tools() -> list[Tool]:
             name='boolean_search',
             description=(
                 'Boolean keyword search over all segments (English and original-language text), with the same metadata filters, '
-                'context windows and export as keyword_search. Operators: AND (or &), OR (or |), NOT (or !, as in '
-                '"AND NOT x"), brackets for grouping, "double quotes" for an exact phrase, and wildcards * and ?. '
+                'context windows and export as keyword_search. Operators: AND (or &), OR (or |), NOT (or !, only as in '
+                '"AND NOT x": a query of NOT terms alone, or NOT inside OR, returns an error), brackets for grouping, "double quotes" for an exact phrase, and wildcards * and ?. '
                 'Precedence is NOT, then AND, then OR, so use brackets. A term with no wildcard matches whole words only '
                 '(use cyber* for cyber, cybersecurity, cyberattack). Example: '
                 '(cyber* OR digital) AND "critical infrastructure" AND NOT terrorism. '
