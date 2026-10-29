@@ -263,3 +263,23 @@ def test_csv_export_neutralises_spreadsheet_formulas():
     exec(compile(ast.Module([fn], []), 'csv_safe', 'exec'), ns)
     rows = ns['_csv_safe']([['=HYPERLINK("x")', '-bullet', '@SUM', 'plain', 0.75, None]])
     assert rows == [["'=HYPERLINK(\"x\")", "'-bullet", "'@SUM", 'plain', 0.75, None]]
+
+
+# --------------------------------------------------------------------------- M1 (logic only; the real check needs Windows)
+def test_vc_runtime_is_run_only_when_powershell_reports_a_microsoft_signature(monkeypatch, tmp_path):
+    import install
+    seen = {}
+
+    def run(cmd, **kw):
+        seen['cmd'], seen['env'] = cmd, kw.get('env', {})
+        return types.SimpleNamespace(returncode=0)
+    monkeypatch.setattr(install.subprocess, 'run', run)
+    assert install._signed_by_microsoft(tmp_path / 'vc.exe') is True
+    assert seen['cmd'][0] == 'powershell' and seen['env']['NSDDD_SIGNED_FILE'] == str(tmp_path / 'vc.exe')
+    monkeypatch.setattr(install.subprocess, 'run', lambda *a, **k: types.SimpleNamespace(returncode=1))
+    assert install._signed_by_microsoft(tmp_path / 'vc.exe') is False
+
+    def missing(*a, **k):
+        raise FileNotFoundError('powershell')
+    monkeypatch.setattr(install.subprocess, 'run', missing)
+    assert install._signed_by_microsoft(tmp_path / 'vc.exe') is False

@@ -415,6 +415,20 @@ def _install_dependencies() -> Path:
     return venv_py
 
 
+def _signed_by_microsoft(path: Path) -> bool:
+    """True when Windows reports a valid Authenticode signature from Microsoft Corporation on `path`.
+    The path is passed through the environment, so no quoting reaches PowerShell's command line."""
+    script = ("$s = Get-AuthenticodeSignature -LiteralPath $env:NSDDD_SIGNED_FILE; "
+              "if ($s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match 'O=Microsoft Corporation') "
+              "{ exit 0 } else { exit 1 }")
+    try:
+        result = subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', script],
+                                env=dict(os.environ, NSDDD_SIGNED_FILE=str(path)), capture_output=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0
+
+
 def _ensure_windows_runtime():
     if platform.system() != 'Windows':
         return
@@ -428,12 +442,22 @@ def _ensure_windows_runtime():
             return
     except OSError:
         pass
+    import shutil
     import tempfile
     import urllib.request
     print('Installing the Microsoft VC++ x64 runtime; accept its licence/administrator prompt.')
     with tempfile.TemporaryDirectory(prefix='nsddd-vc-') as tmp:
         installer = Path(tmp) / 'vc_redist.x64.exe'
-        urllib.request.urlretrieve('https://aka.ms/vs/17/release/vc_redist.x64.exe', installer)
+        try:
+            with urllib.request.urlopen('https://aka.ms/vs/17/release/vc_redist.x64.exe', timeout=60) as response, \
+                    open(installer, 'wb') as out:
+                shutil.copyfileobj(response, out, 1 << 20)
+        except OSError as e:
+            sys.exit(f'Could not download the Microsoft VC++ runtime ({e}). Check the internet connection and run '
+                     'install.py again, or ask IT support to install "Microsoft Visual C++ Redistributable (x64)".')
+        if not _signed_by_microsoft(installer):
+            sys.exit('The downloaded VC++ runtime is not validly signed by Microsoft, so it was not run. '
+                     'Install "Microsoft Visual C++ Redistributable (x64)" from microsoft.com, then run install.py again.')
         status = subprocess.run([str(installer), '/install', '/norestart']).returncode
         if status == 3010:
             sys.exit('Restart Windows, then rerun install.py to finish setup.')
