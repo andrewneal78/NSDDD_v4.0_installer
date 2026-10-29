@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.16.12",
+    "date": "2026-10-29",
+    "changes": [
+      "The installer now checks every download against the checksum published with the data release, and deletes and re-downloads a damaged file instead of installing it.",
+      "Running the installer again after an interrupted or failed unpacking now carries on, instead of failing every time with a download error.",
+      "Boolean search: 'cyber AND NOT terrorism' now works even when the excluded word does not occur in the documents searched (it used to return nothing). A query that only excludes, such as 'NOT terrorism', or that uses NOT inside OR, now gives a clear message instead of wrong results.",
+      "The installer no longer offers to install into a Python environment in your home folder, stops with a clear message if installing the Python packages fails, and understands '~' in the install folder you type.",
+      "On a Mac, Launch.command and Update NSDDD.command no longer use the system Python, which on some Macs asked to install Apple's developer tools.",
+      "Only one NSDDD window installs an update at a time; a second window starts without updating.",
+      "Security: the Mac installer uses a fixed, checked version of the tool that fetches Python; on Windows, the Microsoft runtime is installed only if Windows confirms Microsoft's signature; the 'requests' and 'certifi' packages are updated.",
+      "CSV exports no longer let a spreadsheet treat passage text beginning with =, +, - or @ as a formula.",
+      "The README now matches what the installer does (disk space, Linux requirements, the Windows package, exports and search syntax)."
+    ]
+  },
+  {
     "version": "2026.10.16.11",
     "date": "2026-10-23",
     "changes": [
