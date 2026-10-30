@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.10.30.1",
+    "date": "2026-10-30",
+    "changes": [
+      "Documents with an official English edition and an official German text now carry both: the German of 14 documents (Germany, Austria, Switzerland) is searchable beside the English, linked passage by passage. Greek for document 567, Slovene for 321 and 527, and Chinese for 479 and 70 are added the same way.",
+      "Search results now say how the English relates to the original: 'English (official translation)' when the English is the government's translation, 'English (official parallel)' when two official texts were issued together, 'English (translated)' for our own machine translation.",
+      "Document 643, a party paper rather than a government or parliament document, has been removed (834 documents from 125 countries).",
+      "The AI assistant (MCP) and the HTTP API now reload the search index by themselves after a data update, so German and other original-language passages are found without a restart. The search page still needs to be restarted.",
+      "Corrected web links and German source links in the document list."
+    ]
+  },
+  {
     "version": "2026.10.16.12",
     "date": "2026-10-29",
     "changes": [

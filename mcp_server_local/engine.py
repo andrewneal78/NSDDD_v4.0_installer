@@ -96,17 +96,63 @@ def load_namespace() -> Dict[str, Any]:
         return ns
 
 
+# Files that make up the search index. The notebook loads ids, language labels and alignments into memory once but reads
+# segment text from segments.sqlite on demand, so an index rebuilt under a running server gives silent mismatches (German
+# segments labelled 'en', empty text, no semantic hits). The engine therefore reloads when these change on disk.
+INDEX_FILES = ('segments.sqlite', 'encoded_segments.json', 'alignment_dict.json', 'alignment_anchor.json',
+               'documents_dict.json', 'countries_dict.json', 'segment_encodings_metadata.json',
+               'segment_encodings.f16.memmap')
+INDEX_SETTLE_SECONDS = 90        # a file written this recently means a rebuild may still be running
+_index_sig: Optional[tuple] = None
+
+
+def _index_signature(ns: Dict[str, Any]) -> Optional[tuple]:
+    """((name, mtime_ns, size), ...) of the index files, or None when the notebook has no MODEL_PATH."""
+    root = ns.get('MODEL_PATH')
+    if root is None:
+        return None
+    sig = []
+    for name in INDEX_FILES:
+        try:
+            st = (Path(root) / name).stat()
+        except OSError:
+            continue
+        sig.append((name, st.st_mtime_ns, st.st_size))
+    return tuple(sig)
+
+
+def _reload_if_index_changed(ns: Dict[str, Any]) -> None:
+    """Drop the in-memory model when the index files changed since it was loaded. Waits out a rebuild in progress."""
+    global _index_sig, _model_ready
+    if _index_sig is None or ns.get('MODEL_DICT') is None:
+        return
+    sig = _index_signature(ns)
+    if sig is None or sig == _index_sig:
+        return
+    import time
+    newest = max((m for _, m, _ in sig), default=0) / 1e9
+    if time.time() - newest < INDEX_SETTLE_SECONDS:
+        raise RuntimeError('The search index is being updated. Wait a minute and try again.')
+    print('Search index changed on disk since it was loaded: reloading.', file=sys.stderr)
+    ns['MODEL_DICT'] = None          # initialize_model() then reads every file again (the encoder is unchanged and kept)
+    _model_ready = False
+    _index_sig = None
+
+
 def ensure_loaded(semantic=True) -> Dict[str, Any]:
-    """Load data first; keyword/Boolean operations do not load the encoder."""
-    global _model_ready
+    """Load data first; keyword/Boolean operations do not load the encoder. Reloads if the index changed on disk."""
+    global _model_ready, _index_sig
     ns = load_namespace()
     with _lock:
+        _reload_if_index_changed(ns)
         with redirect_stdout(sys.stderr):
             model_dict, encoder = ns['initialize_model'](load_encoder=semantic)
         if model_dict is None:
             raise RuntimeError(f"Model failed to load: {ns.get('MODEL_LOAD_ERROR')}")
         if semantic and encoder is None:
             raise RuntimeError(f"Encoder failed to load: {ns.get('ENCODER_LOAD_ERROR')}")
+        if _index_sig is None:
+            _index_sig = _index_signature(ns)      # taken after a successful load, so a failed load is retried
         _model_ready = True              # reported by the HTTP API's / and /health
     return ns
 

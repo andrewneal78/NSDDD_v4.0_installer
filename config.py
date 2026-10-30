@@ -81,7 +81,7 @@ DOWNLOADS = {
             'Country_metadata.csv',
         ],
         'required': True,
-        'description': 'Metadata: 835-document / 125-country-and-territory 4.0 reference CSVs'
+        'description': 'Metadata: 834-document / 125-country-and-territory 4.0 reference CSVs'
     },
     'whats_new': {
         'filename': 'WHATS_NEW_IN_NSDDD_V4.0.md',
@@ -156,8 +156,8 @@ TIMEOUT_SECONDS = 30
 
 # Dataset information
 DATASET_NAME = 'National Security and Defence Documents Dataset (1987-2026) v4.0'
-DATASET_DOCUMENTS = 835
+DATASET_DOCUMENTS = 834
 DATASET_COUNTRIES = 125
 DATASET_YEARS = '1987–2026'
-DATASET_SEGMENTS = 1377867
+DATASET_SEGMENTS = 1394358
 DATASET_ENCODING_DIM = 256

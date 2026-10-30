@@ -2,7 +2,7 @@
 
 > **Pre-release:** NSDDD 4.0 is a pre-release. The full dataset will be released on Edinburgh DataShare early in the new year, with all the new documents from 2026 plus other additions as they are found; bug fixes are published as updates until then. The installer downloads its data from this project's GitHub release (`data-4.0-pre`), not from DataShare. The DataShare link and citation below refer to 3.5 and will be replaced for the final release. The standalone Windows package (`NSDDD_4.0_Windows.zip` on the [releases page](https://github.com/andrewneal78/NSDDD_v4.0_installer/releases)) is built separately from this repository; its `Setup.bat` downloads the same data during set-up, after which it runs offline. New users should start with `start_here.html`.
 
-Local semantic search across the [National Security and Defence Documents Dataset (NSDDD) v4.0](https://datashare.ed.ac.uk/handle/10283/9182): **835 national security strategy documents from 125 countries, 1987–2026**, with about 1.38 million pre-computed sentence embeddings in English and 38 original languages. You can search in English or in any of those languages, and look up exact terms in the original texts with keyword search.
+Local semantic search across the [National Security and Defence Documents Dataset (NSDDD) v4.0](https://datashare.ed.ac.uk/handle/10283/9182): **834 national security strategy documents from 125 countries, 1987–2026**, with about 1.39 million pre-computed sentence embeddings in English and 38 original languages. You can search in English or in any of those languages, and look up exact terms in the original texts with keyword search.
 
 Search by concept, filter by country, region, organisation, year, and more — entirely offline after installation.
 
@@ -189,10 +189,10 @@ The browser-based interface provides:
 
 | | |
 |---|---|
-| Documents | 835 |
+| Documents | 834 |
 | Countries | 125 |
 | Coverage | 1987–2026 |
-| Segments | about 1.38 million sentence-level (English for every document, plus the original language for 233 documents) |
+| Segments | about 1.39 million sentence-level (English for every document, plus the original language for 253 documents) |
 | Embedding model | `Qwen/Qwen3-Embedding-0.6B` (multilingual; 256 dimensions, float16; chosen in a 2026 comparison of eight models) |
 | Languages | English + translations for 80+ countries |
 | DataShare | https://datashare.ed.ac.uk/handle/10283/9182 |
