@@ -40,7 +40,7 @@ carries:
 | `filter_options`  | Enumerate available filter values (regions, organisations, income groups, Freedom House status, doc types, years…) — no model load                                                                                          |
 | `corpus_stats`    | Corpus, model and per-language statistics                                                                                                                                                                                   |
 
-Defaults: search threshold 0.72, organisation membership counted as of each document's year, cluster detail 0.78, `context_window` 1.
+Defaults: search threshold 0.70, organisation membership counted as of each document's year, cluster detail 0.78, `context_window` 1.
 Exports land in the installer's `outputs/` directory.
 
 ## Registration (`~/.claude/mcp_servers.json`)

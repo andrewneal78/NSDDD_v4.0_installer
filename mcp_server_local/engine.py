@@ -163,6 +163,8 @@ def _make_filters(ns: Dict[str, Any], filters: Optional[Dict]) -> Any:
         for key, value in filters.items():
             if not hasattr(f, key):
                 raise ValueError(f'Unknown filter field: {key}')
+            if key == 'doc_numbers':        # numbers or ranges such as "100-110"; the assistant may send numbers or text
+                value = ns['_CC'].parse_document_numbers(' '.join(str(v) for v in (value if isinstance(value, (list, tuple)) else [value])))
             setattr(f, key, value)
     return f
 
@@ -248,6 +250,11 @@ def _format_response(results: List[Any], cluster_info: Dict, result_limit: int,
             'region': r.region,
             'income_group': r.income_group,
             'freedom_status': r.freedom_status,
+            'aid_status': getattr(r, 'oda_status', ''),
+            'vdem_regime': getattr(r, 'vdem_regime', ''),
+            'vdem_electoral_democracy': (getattr(r, 'vdem', None) or {}).get('v2x_polyarchy'),
+            'vdem_liberal_democracy': (getattr(r, 'vdem', None) or {}).get('v2x_libdem'),
+            'vdem_year': getattr(r, 'vdem_year', None),
         }
         if ns is not None:
             row.update(_multilingual_fields(ns, r.segment_id, context_chars))
@@ -296,7 +303,7 @@ def _export(ns, key: str, results, cluster_info, cfg, file_stem: Optional[str] =
 
 
 def semantic_search(query: str,
-                    search_threshold: float = 0.72,
+                    search_threshold: float = 0.70,
                     cluster_threshold: float = 0.78,
                     context_window: int = 1,
                     max_results: Optional[int] = None,
@@ -328,6 +335,8 @@ def semantic_search(query: str,
 
     response = _format_response(results, cluster_info, result_limit, ns=ns)
     _guidance.annotate(response, (r.score for r in results))
+    if not results and (cluster_info or {}).get('no_results'):      # say why nothing came back, and what a lower threshold would give
+        response['no_results_reason'] = cluster_info['no_results']
     response.update({
         'query': query,
         'search_threshold': search_threshold,
@@ -457,14 +466,22 @@ def filter_options() -> Dict[str, Any]:
         'subregions': sorted(metadata.get('unique_subregions', [])),
         'countries_iso3': sorted(set(metadata.get('regions', {}).keys())),
         'organizations': sorted(metadata.get('organizations', {}).keys()),
-        'income_groups': sorted(set(metadata.get('income_groups', {}).values())),
-        'freedom_house_status': sorted(set(metadata.get('freedom_house', {}).values())),
-        'oda_status': sorted(set(metadata.get('oda_mapping', {}).values())),
+        'income_groups': sorted({g for s in metadata.get('income_history', {}).values() for g in s.values()}
+                                or set(metadata.get('income_groups', {}).values())),
+        'freedom_house_status': ['Free', 'Partly Free', 'Not Free'],
+        'oda_status': sorted({v for h in metadata.get('aid_history', {}).values() for _y, v in h}
+                             or set(metadata.get('oda_mapping', {}).values())),
+        'vdem_regimes': ns['_CC'].REGIMES,
+        'vdem_measures': [{'column': c, 'title': t, 'scale': s} for c, t, s in metadata.get('vdem_measures', [])],
         'small_states_groups': ['Small States', 'SSF', 'UN SIDS'],
         'huntington_civilizations': sorted(metadata.get('huntington_civilizations', [])),
         'doc_types': col('NSS/WP/DD', 'Type', 'type'),
         'year_range': years,
-        'notes': ('Within a filter field values are OR; across fields AND. '
+        'notes': ('Income group, Freedom House status, aid status and V-Dem are all taken for the year each document was published '
+                  '(a document later than the data uses the data\'s last year). '
+                  'doc_numbers takes document numbers or ranges, e.g. ["12", "100-110"]. '
+                  'vdem_ranges is a list of {"measure": "v2x_polyarchy", "min": 0.5, "max": null}; vdem_measures lists the choices. '
+                  'Within a filter field values are OR; across fields AND. '
                   'countries take ISO3 codes; most_recent_only (bool) keeps each '
                   "country's most recent document only."),
     }

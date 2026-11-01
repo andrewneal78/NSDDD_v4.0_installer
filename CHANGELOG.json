@@ -1,5 +1,17 @@
 [
   {
+    "version": "2026.11.01.1",
+    "date": "2026-11-01",
+    "changes": [
+      "Income group, democracy status and aid status are now taken for the year each document was published, instead of today's value. A Hungarian document of 2005 counts as Free and High or Upper-middle income as it was then; a document from before aid-status records begin (1996) has no aid status.",
+      "New: V-Dem democracy data (Varieties of Democracy, v16, CC BY-SA 4.0). Filter by the Regimes of the World category or by a range on any of 128 V-Dem measures, see the regime beside each result, and add the main V-Dem columns to the spreadsheet export (all 128 measures if you tick the box). The AI assistant and the HTTP API accept the same filters.",
+      "Freedom House history replaced with the corrected version, now covering every country with a rating (the United Arab Emirates, Cabo Verde, Uzbekistan, Kosovo, Mozambique and Tajikistan were missing or wrong) and the 2026 edition.",
+      "New: a document catalogue page, linked at the top of the search page, listing every document with its number, and a Document numbers box to search only the documents you choose (single numbers, lists, or ranges such as 100-110). The AI assistant and API take doc_numbers.",
+      "Added document 901, The Plan for a Stronger Canada (2026), in English and French. Corrected the parallel-text page of document 137, and rebuilt 750 and 765.",
+      "The default search threshold is now 0.70 (it was 0.72): in a check of 15 topics, passages scoring 0.70 to 0.72 were nearly as often relevant as those above 0.72, while relevance falls sharply below 0.70. It returns about three times as many results; raise the threshold for a tighter search. A search that finds nothing now says how close the nearest passage came and what threshold would find results."
+    ]
+  },
+  {
     "version": "2026.10.30.1",
     "date": "2026-10-30",
     "changes": [

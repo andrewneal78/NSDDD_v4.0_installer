@@ -24,8 +24,8 @@ words such as security, crisis or threat attract generic text unless they are th
 
 Reading scores (provisional, from a validation on Europe results)
 - score >= 0.75: usually relevant (about 95% judged relevant)
-- 0.70-0.75: mixed (about half judged relevant); read the passage before using it. The default threshold, 0.72, \
-sits in this band: use 0.75 when you need evidence and 0.70 when you are exploring
+- 0.70-0.75: mixed (about half judged relevant in the first check; a later model-judged check of 15 topics found most relevant at 0.70-0.72 \
+but uneven by topic); read the passage before using it. The default threshold is 0.70: use 0.75 when you need evidence
 - below 0.70: mostly noise (about 14% relevant)
 - Quality varies by query. Before relying on a query, read about 10 results at >= 0.70; if fewer than about \
 40% are on topic, reword it with more concrete anchors.

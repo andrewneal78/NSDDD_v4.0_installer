@@ -37,14 +37,14 @@ Request bodies mirror the MCP tool inputs. Example:
 ```bash
 curl -s http://127.0.0.1:8868/search -H 'Content-Type: application/json' -d '{
   "query": "national sovereignty and defence",
-  "search_threshold": 0.72,
+  "search_threshold": 0.70,
   "max_results": 40,
   "filters": {"regions": ["Europe"], "year_min": 2015},
   "result_limit": 10
 }' | jq
 ```
 
-Defaults: search threshold 0.72, organisation membership counted as of each document's year, cluster detail 0.78, `context_window` 1.
+Defaults: search threshold 0.70, organisation membership counted as of each document's year, cluster detail 0.78, `context_window` 1.
 Exports (`"export": true`) land in the installer's `outputs/` directory.
 
 ## Running

@@ -47,9 +47,12 @@ class Filters(BaseModel):
     subregions: Optional[List[str]] = None
     organizations: Optional[List[str]] = Field(None, description='e.g. NATO, EU, ASEAN')
     membership_at_publication: Optional[bool] = Field(None, description='With organizations: members in the year each document was published (default true); false = members today')
-    income_groups: Optional[List[str]] = None
-    freedom_house_status: Optional[List[str]] = Field(None, description='Free / Partly Free / Not Free')
-    oda_status: Optional[List[str]] = None
+    income_groups: Optional[List[str]] = Field(None, description='Income group in the year each document was published')
+    freedom_house_status: Optional[List[str]] = Field(None, description='Free / Partly Free / Not Free, in the year each document was published')
+    oda_status: Optional[List[str]] = Field(None, description='ODA_Recipient / Non_Recipient in the year each document was published')
+    vdem_regimes: Optional[List[str]] = Field(None, description='V-Dem Regimes of the World in the year each document was published')
+    vdem_ranges: Optional[List[Dict[str, Any]]] = Field(None, description='[{"measure": "v2x_polyarchy", "min": 0.5, "max": null}]; GET /filters lists the measures')
+    doc_numbers: Optional[List[str]] = Field(None, description='Search only these document numbers; ranges such as "100-110" are accepted')
     small_states_groups: Optional[List[str]] = Field(None, description='Small States / SSF / UN SIDS')
     huntington_civilizations: Optional[List[str]] = None
     doc_types: Optional[List[str]] = Field(None, description='NSS / WP / DD / TA')
@@ -65,7 +68,7 @@ class Filters(BaseModel):
 
 class SearchRequest(BaseModel):
     query: str = Field(..., description='Topic description, e.g. "threats to democracy"')
-    search_threshold: float = Field(0.72, ge=0.5, le=1.0)
+    search_threshold: float = Field(0.70, ge=0.5, le=1.0)
     cluster_threshold: float = Field(0.78, ge=0.5, le=1.0)
     context_window: int = Field(1, description='Segments of surrounding text per hit')
     max_results: Optional[int] = Field(None, description='Cap on results (highest scores kept)')
