@@ -8,7 +8,7 @@ viewer_pages.zip) in a folder, then:
 --xhr builds viewer_pages.zip from the viewer-pages folder. Without --upload it only writes data_version.json
 and prints what it would upload. The manifest lists every zip, so zips not in the folder keep the hash of the
 current release. Installed copies download only the zips whose hash changed. Version numbers must increase."""
-import argparse, hashlib, json, subprocess, sys, zipfile
+import argparse, hashlib, json, re, subprocess, sys, zipfile
 from pathlib import Path
 
 import data_update as du
@@ -20,6 +20,31 @@ def sha256(path):
         for block in iter(lambda: f.read(1 << 20), b''):
             h.update(block)
     return h.hexdigest()
+
+
+def forbidden_in_zip(path):
+    """Reasons a data zip must not be published: private paragraph-layer data (experimental, not for users).
+    Looks for para_encodings* files, and in segments.sqlite (header pages hold the schema) a `para` table,
+    the seg_para / para_pid indexes or a `para` column on `seg`. Returns a list of strings, empty when clean."""
+    problems = []
+    with zipfile.ZipFile(path) as z:
+        for n in z.namelist():
+            if Path(n).name.startswith('para_encodings'):
+                problems.append(f'{Path(path).name}: contains {n}')
+            if Path(n).name == 'segments.sqlite':
+                with z.open(n) as f:
+                    head = f.read(1 << 20)
+                if not head.startswith(b'SQLite format 3'):
+                    problems.append(f'{Path(path).name}: {n} is not a SQLite file')
+                    continue
+                if re.search(rb'CREATE TABLE "?para"?\s*\(', head):
+                    problems.append(f'{Path(path).name}: {n} has a para table')
+                if re.search(rb'CREATE INDEX (seg_para|para_pid)\b', head):
+                    problems.append(f'{Path(path).name}: {n} has a paragraph index (seg_para / para_pid)')
+                m = re.search(rb'CREATE TABLE "?seg"?\s*\(([^)]*)\)', head)
+                if m and re.search(rb'[,(]\s*"?para"?\s', m.group(1)):
+                    problems.append(f'{Path(path).name}: {n} has a seg.para column')
+    return problems
 
 
 def build_viewer_zip(xhr, out):
@@ -51,6 +76,10 @@ def main():
     for name in du.TARGETS:
         p = folder / name
         if p.is_file():
+            bad = forbidden_in_zip(p)
+            if bad:
+                sys.exit('Refusing to publish: private paragraph data found.\n  ' + '\n  '.join(bad) +
+                         '\nBuild the zip from a copy of segments.sqlite with the para table, its indexes and seg.para removed (then VACUUM).')
             files[name] = {'sha256': sha256(p), 'size': p.stat().st_size}
             changed.append(name)
     if not changed:

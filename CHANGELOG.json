@@ -1,5 +1,13 @@
 [
   {
+    "version": "2026.11.03.1",
+    "date": "2026-11-03",
+    "changes": [
+      "Corrected the M49 code of document 560 (Moldova) from 298 to 498; the metadata update arrives with the data update.",
+      "The user guide (PDF) is updated: current figures (default threshold 0.70, 1,394,688 segments, 39 original languages, 252 aligned documents, 186 documents added and 22 removed), more cautious wording on how reliable the score bands are, on machine translation (with a citation) and on document types, where Defence White Papers and Defence Documents are now described as differing."
+    ]
+  },
+  {
     "version": "2026.11.01.1",
     "date": "2026-11-01",
     "changes": [
