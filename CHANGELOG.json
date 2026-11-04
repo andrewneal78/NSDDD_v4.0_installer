@@ -1,5 +1,14 @@
 [
   {
+    "version": "2026.11.04.2",
+    "date": "2026-11-04",
+    "changes": [
+      "Corrected translation provenance in the document metadata. For 44 documents the metadata said the English had been translated by Google Cloud Translation; it was in fact translated by Qwen3.5 (University of Edinburgh ELM). Those rows now say so: Translation engine ‘LLM (elm)’, model Qwen/Qwen3.5-397B-A17B-FP8, and a Provenance basis of ‘pipeline record’. A further 88 documents now record that some of their sentences were translated later by Qwen (for example ‘Google Cloud Translation, with 12 sentences by LLM (elm)’). The metadata file that ships with the program is the same file; the corrected one arrives with the data update.",
+      "Data update 2026.11.04.2: two documents repaired. Document 15 (Armenia, National Security Strategy 2007): 30 words had lost their apostrophe (‘Armenias’, ‘countrys’, ‘Russias’, ‘Azerbaijans’, ‘Irans’) because the source PDF has none; they are restored, and the 11 straight apostrophes already in the text are made typographic, so the document uses one form. Document 35 (Austria, Weissbuch 2012): bracketed German explanations that our processing had added to 45 entries of the abbreviations list, and that are not in the source, are removed from the German and the English text, and three terms left in German are translated (National Defence Academy, Gross domestic product, Federal Final Accounts). The search data, the document metadata and the viewer pages are refreshed; the program asks to download them the next time you start NSDDD.",
+      "Starting NSDDD with python3 launch.py --no-update now skips the check for new data as well as for a new version (it used to skip only the program update, so new data could still be installed over a search index you had rebuilt yourself). To keep a rebuilt index from being replaced at any start, create an empty file called no_data_update next to launch.py: new data is then announced but not installed, and python3 launch.py --update-only installs it when you choose."
+    ]
+  },
+  {
     "version": "2026.11.04.1",
     "date": "2026-11-04",
     "changes": [

@@ -143,11 +143,12 @@ While NSDDD 4.0 is a pre-release, bug fixes are published often. A download inst
 
 ```bash
 python3 launch.py --update-only   # check and install without starting the search page (Update NSDDD.command on a Mac; Update NSDDD.bat in the Windows package)
-python3 launch.py --no-update     # skip the check for one run
+python3 launch.py --no-update     # skip the check for a new version and for new data, for one run
 ```
 
 - **Download/ZIP installs:** compares the local `VERSION` with the one on GitHub; if newer, downloads the latest files and overlays them while preserving local data folders (`NSDDD_v4.0_workspace`, `outputs`, `.venv`, `data`, etc.). Updates replace program files only; if a release ever needs new packages or data, its notes say so.
 - **Git installs (cloned repo):** also update themselves at start-up (a fast-forward `git pull`), but only while no tracked file has local changes and your checkout is not ahead of origin. A checkout with edits only announces the update; run `python3 launch.py --update` to pull it yourself.
+- To keep a copy of the search data that you rebuilt yourself from being replaced by a data update, create an empty file called `no_data_update` next to `launch.py`: new data is then announced but never installed (run `python3 launch.py --update-only` to install it when you choose).
 - Set `NSDDD_AUTO_UPDATE=0` to stop all automatic installs (program and data), or `NSDDD_AUTO_UPDATE=1` to force them in a git checkout that has local changes.
 
 ## Anonymous start-up count

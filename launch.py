@@ -49,6 +49,7 @@ ZIP_URL = f"https://github.com/{REPO_OWNER}/{REPO_NAME}/archive/refs/heads/{DEFA
 AUTO_UPDATE_SETTING = os.environ.get("NSDDD_AUTO_UPDATE", "")
 AUTO_UPDATE_ENABLED = AUTO_UPDATE_SETTING != "0"
 UPDATE_NOTICE = "update_notice.json"
+DATA_UPDATE_HOLD = "no_data_update"   # an empty file with this name next to launch.py: new data is announced, never installed
 SHOW_TRACEBACKS_ENABLED = os.environ.get("NSDDD_SHOW_TRACEBACKS", "1") != "0"
 HTTP_TIMEOUT_SECONDS = 8
 
@@ -408,10 +409,11 @@ def maybe_update_data(cwd: Path, apply: bool = True) -> bool:
         print(f"  NEW DATA AVAILABLE: {local} -> {manifest['data_version']}")
         if manifest.get("notes"):
             print(f"  {manifest['notes']}")
-        if apply:
+        install_now = apply and os.environ.get("NSDDD_AUTO_DATA_UPDATE") != "0" and AUTO_UPDATE_ENABLED and not (cwd / DATA_UPDATE_HOLD).exists()
+        if install_now:
             print(f"  Downloading it now (about {size_mb:,.0f} MB). Keep this window open.")
         print("=" * 62)
-        if not apply or os.environ.get("NSDDD_AUTO_DATA_UPDATE") == "0" or not AUTO_UPDATE_ENABLED:
+        if not install_now:
             print("ℹ️  Not installed (automatic updates are switched off). To update, run:  python launch.py --update-only")
             return False
         result = data_update.apply(cwd, manifest, changed)
@@ -479,10 +481,15 @@ def maybe_update(cwd: Path, no_update: bool, apply: bool = False) -> bool:
     return False
 
 
+def data_update_wanted(args) -> bool:
+    """False when the user asked to skip updates (--no-update) or the data check (--no-data-update) on this run."""
+    return not (args.no_data_update or args.no_update)
+
+
 def restart_self():
     """Run the updated launcher as a child process (os.execv on Windows would detach and end the start script early)."""
     print("↻ Restarting with the updated files...")
-    rc = subprocess.call([sys.executable, str(Path(__file__)), "--no-update"] + [a for a in sys.argv[1:] if a not in ("--update", "--no-update")])
+    rc = subprocess.call([sys.executable, str(Path(__file__)), "--restarted"] + [a for a in sys.argv[1:] if a not in ("--update", "--no-update", "--restarted")])
     sys.exit(rc)
 
 
@@ -580,7 +587,8 @@ def main():
     global PORT, URL
     parser.add_argument("--low-power", action="store_true", help="Use two CPU threads, optional charts/exports and a smaller clustering limit")
     parser.add_argument("--detach", action="store_true", help="Start in background, open browser, then exit")
-    parser.add_argument("--no-update", action="store_true", help="Skip update check on this run")
+    parser.add_argument("--no-update", action="store_true", help="Skip the check for a new version and for new data on this run")
+    parser.add_argument("--restarted", action="store_true", help=argparse.SUPPRESS)   # set by restart_self: the program was just updated, so skip only that check
     parser.add_argument("--update", action="store_true", help="Install an available update (updates are otherwise only announced)")
     parser.add_argument("--no-data-update", action="store_true", help="Skip the check for new data on this run")
     parser.add_argument("--update-only", action="store_true", help="Check for and install an update, then exit without starting the app")
@@ -598,10 +606,10 @@ def main():
         return
 
     with update_lock(cwd) as may_update:
-        updated = may_update and maybe_update(cwd, args.no_update, apply=args.update)
+        updated = may_update and maybe_update(cwd, args.no_update or args.restarted, apply=args.update)
     if updated:
         restart_self()                           # after the lock is released: the restarted launcher takes it again
-    if not args.no_data_update:
+    if data_update_wanted(args):
         with update_lock(cwd) as may_update:
             if may_update:
                 maybe_update_data(cwd, apply=True)       # data lives outside git, so it is always safe to update
@@ -611,7 +619,7 @@ def main():
     except Exception:
         pass
 
-    if args.no_update:
+    if args.no_update or args.restarted:
         os.environ['NSDDD_AUTO_UPDATE'] = '0'
     if args.low_power:
         os.environ['NSDDD_LOW_POWER'] = '1'
