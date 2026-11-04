@@ -94,9 +94,10 @@ def test_parse_document_numbers(text, expected):
 
 
 def test_real_metadata_if_present():
-    meta = Path('/Users/aneal/Library/CloudStorage/OneDrive-UniversityofEdinburgh/national_security_analysis/gemini_PDF_processor/metadata_4.0')
+    import os   # point NSDDD_TEST_METADATA at an installed metadata/ folder to run this check
+    meta = Path(os.environ.get('NSDDD_TEST_METADATA', 'metadata_4.0_not_set'))
     if not (meta / 'Vdem.csv').exists():
-        pytest.skip('4.0 metadata not on this machine')
+        pytest.skip('4.0 metadata not available (set NSDDD_TEST_METADATA to an installed metadata folder)')
     fh = C.load_freedom_history(meta / 'Freedom_house.csv')
     assert C.change_point_asof(fh, 'HUN', 2005) == 'Free'
     assert C.change_point_asof(fh, 'HUN', 2025) == 'Partly Free'

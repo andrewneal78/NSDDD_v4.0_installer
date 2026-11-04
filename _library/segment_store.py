@@ -68,31 +68,18 @@ class SegmentStore:
         return SegmentStore(self.path, docs)
 
 
-_UNSPACED = re.compile(r'[぀-ヿ㐀-鿿가-힯฀-๿]')
+from _library.keyword_matching import fts_query as _fts_query     # one definition of a match, shared with keyword and Boolean search
 
 
-def _fts_query(keyword):
-    """FTS5 query from an app keyword ('Innere Führung', 'resilien*', 'defen?e'): every literal word must occur
-    (a word next to a wildcard as a prefix). None when no usable word (the caller then scans everything)."""
-    parts = []
-    for tok in re.split(r'\s+', keyword.strip()):
-        m = re.match(r'^([^\W_]{2,})', tok.replace('?', '*'))
-        if not m:
-            continue
-        word = m.group(1)
-        prefix = len(word) < len(re.sub(r'[^\w*?]', '', tok)) or '*' in tok or '?' in tok
-        parts.append('"%s"%s' % (word.replace('"', ''), '*' if prefix else ''))
-    return ' AND '.join(parts) or None
-
-
-def _candidates(self, keyword):
-    """Segments that may match a keyword, from the full-text index (unicode61: case-folded for every script,
-    accents kept); the caller confirms each with its own pattern. Falls back to every segment for unspaced
-    scripts (Chinese, Japanese, Korean, Thai), when the index is missing, or when no literal word is given."""
-    q = _fts_query(keyword)
+def _candidates(self, keyword, smart=True, inside=False):
+    """Segments that can match a keyword, from the full-text index (unicode61: case-folded for every script, accents kept).
+    The query comes from keyword_matching.fts_query, which finds every segment the term's pattern can match; the caller
+    confirms each with that pattern. Scans every segment when no safe query exists (a leading wildcard, Chinese, Japanese,
+    Korean or Thai text) or when the index is missing."""
+    q = _fts_query(keyword, smart, inside)
     con = self._con()
     has_fts = con.execute("SELECT 1 FROM sqlite_master WHERE name = 'seg_fts'").fetchone()
-    if not q or not has_fts or _UNSPACED.search(keyword):
+    if not q or not has_fts:
         yield from self.items()
         return
     where, args = self._where()

@@ -28,6 +28,9 @@ def main():
                 print('✗ ' + error)
             return 1
         print('✓ index integrity, dimensions and every SQLite row mapping')
+        from _library.installation import catalogue_warnings
+        for line in catalogue_warnings(base):         # a warning, not a failure: the search still runs, but a figure may be mislabelled
+            print('⚠ ' + line)
         from _library.viewers import ensure_viewers
         print(f'✓ document viewers ({ensure_viewers(base / "model", ROOT / "XHR")} generated)')
         from _library import cluster_labeller

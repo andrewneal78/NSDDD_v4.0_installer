@@ -70,34 +70,36 @@ class SearchRequest(BaseModel):
     query: str = Field(..., description='Topic description, e.g. "threats to democracy"')
     search_threshold: float = Field(0.70, ge=0.5, le=1.0)
     cluster_threshold: float = Field(0.78, ge=0.5, le=1.0)
-    context_window: int = Field(1, description='Segments of surrounding text per hit')
-    max_results: Optional[int] = Field(None, description='Cap on results (highest scores kept)')
+    context_window: int = Field(1, ge=0, le=5, description='Segments of surrounding text per hit')
+    max_results: Optional[int] = Field(None, ge=1, description='Cap on results (highest scores kept)')
     filters: Optional[Filters] = None
     export: bool = Field(False, description='Export results CSV + norm_context CSV to outputs/')
     export_name: Optional[str] = None
-    result_limit: int = Field(20, description='Max results returned inline (export contains all)')
+    result_limit: int = Field(20, ge=1, description='Max results returned inline (export contains all)')
 
 
 class KeywordRequest(BaseModel):
     keyword: str
-    smart_boundaries: bool = Field(True, description='Allow hyphenated variants')
+    smart_boundaries: bool = Field(True, description='Also match hyphenated or slashed variants of a phrase (cyber-security for cyber security)')
+    match_inside_words: bool = Field(False, description='Also match a word where it is part of a longer word (Sicherheit finds Sicherheitspolitik). Off by default; slower, because every segment in scope is scanned')
     fuzzy_matching: bool = False
-    fuzzy_threshold: int = 80
-    context_window: int = 1
+    fuzzy_threshold: int = Field(80, ge=50, le=100)
+    context_window: int = Field(1, ge=0, le=5)
     filters: Optional[Filters] = None
     export: bool = False
     export_name: Optional[str] = None
-    result_limit: int = 20
+    result_limit: int = Field(20, ge=1)
 
 
 class BooleanRequest(BaseModel):
     query: str = Field(..., description='e.g. (cyber* OR digital) AND "critical infrastructure" AND NOT terrorism')
     scoring: str = Field('match_count', description="'match_count', 'avg_score' or 'max_score'")
-    context_window: int = 1
+    match_inside_words: bool = Field(False, description='Also match a word where it is part of a longer word (Sicherheit finds Sicherheitspolitik). Off by default; slower, because every segment in scope is scanned')
+    context_window: int = Field(1, ge=0, le=5)
     filters: Optional[Filters] = None
     export: bool = False
     export_name: Optional[str] = None
-    result_limit: int = 20
+    result_limit: int = Field(20, ge=1)
 
 
 # --------------------------------------------------------------------------- #
@@ -196,6 +198,7 @@ async def keyword(req: KeywordRequest):
             engine.keyword_search,
             keyword=req.keyword,
             smart_boundaries=req.smart_boundaries,
+            match_inside_words=req.match_inside_words,
             fuzzy_matching=req.fuzzy_matching,
             fuzzy_threshold=req.fuzzy_threshold,
             context_window=req.context_window,
@@ -217,6 +220,7 @@ async def boolean(req: BooleanRequest):
             engine.boolean_search,
             query=req.query,
             scoring=req.scoring,
+            match_inside_words=req.match_inside_words,
             context_window=req.context_window,
             filters=req.filters.as_engine_dict() if req.filters else None,
             export=req.export,

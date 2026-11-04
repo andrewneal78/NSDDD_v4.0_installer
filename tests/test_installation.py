@@ -155,3 +155,21 @@ class InstallationTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+def test_catalogue_warnings_compare_index_and_metadata(tmp_path):
+    import json
+    from _library.installation import catalogue_warnings
+    (tmp_path / 'model').mkdir()
+    (tmp_path / 'metadata').mkdir()
+    (tmp_path / 'metadata' / 'document_metadata.csv').write_text(
+        'File prefix,Country,ISO Alpha-3 Code,Year,NSS/WP/DD\n1,USA,USA,2018,NSS\n2,UK,GBR,2010,WP\n', encoding='utf-8')
+    (tmp_path / 'model' / 'countries_dict.json').write_text(json.dumps({'USA': {'country': 'USA'}, 'GBR': {'country': 'United Kingdom'}}))
+    docs = {'1': {'iso': 'USA', 'year': 2018, 'type': 'NSS'}, '2': {'iso': 'GBR', 'year': '2011', 'type': 'WP'}}
+    (tmp_path / 'model' / 'documents_dict.json').write_text(json.dumps(docs))
+    out = catalogue_warnings(tmp_path)
+    assert len(out) == 2 and any('year is "2011"' in l for l in out) and any('country name is "United Kingdom"' in l for l in out)
+    docs['2'].update(year=2010)
+    (tmp_path / 'model' / 'documents_dict.json').write_text(json.dumps(docs))
+    (tmp_path / 'model' / 'countries_dict.json').write_text(json.dumps({'USA': {'country': 'USA'}, 'GBR': {'country': 'UK'}}))
+    assert catalogue_warnings(tmp_path) == []

@@ -261,7 +261,7 @@ def apply(app_dir, manifest, changed, log=print):
     tmp = data_dir / '_update'
     shutil.rmtree(tmp / 'stage', ignore_errors=True)
     tmp.mkdir(parents=True, exist_ok=True)
-    stages = []
+    stages, done = [], {}
     before = _catalogue(data_dir)
     try:
         for i, name in enumerate(changed, 1):
@@ -275,7 +275,6 @@ def apply(app_dir, manifest, changed, log=print):
             with zipfile.ZipFile(zpath) as z:
                 z.extractall(stage)
             stages.append((name, stage))
-        done = {}
         for name, stage in stages:
             sub, mode = TARGETS[name]
             _swap_in(stage, xhr_dir if sub == '@XHR' else data_dir / sub, mode)
@@ -285,7 +284,17 @@ def apply(app_dir, manifest, changed, log=print):
         write_state(data_dir, manifest['data_version'], have, manifest.get('notes', ''))
         return dict(describe_changes(before, _catalogue(data_dir)), version=manifest['data_version'])
     except Exception as e:
-        log(f'  The data update did not finish ({e}); the data is unchanged or was restored.')
+        if not done:
+            log(f'  The data update did not finish ({e}); the data is unchanged or was restored.')
+        else:       # earlier zips are already in place: record them, so the next start fetches only what is missing
+            try:
+                version, have = read_state(data_dir)
+                have.update(done)
+                write_state(data_dir, version, have, '')
+            except Exception:
+                pass
+            log(f'  The data update stopped part-way ({e}). Already installed: {", ".join(sorted(done))}. '
+                'The rest is fetched the next time NSDDD starts; until then search results may mix old and new data.')
         return False
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

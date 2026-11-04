@@ -62,3 +62,33 @@ def validate_data(base, require_encoder=True):
     except Exception as exc:
         errors.append(f'invalid search data: {exc}')
     return errors
+
+
+def catalogue_warnings(base, limit=8):
+    """Disagreements between the three places that describe a document: model/documents_dict.json (shown on results),
+    model/countries_dict.json (country names) and metadata/document_metadata.csv (used by the filters and the normalisation
+    sheet). Returns plain-language lines; empty when they agree. Fields a file does not carry are not compared."""
+    base = Path(base)
+    try:
+        docs = json.loads((base / 'model' / 'documents_dict.json').read_text(encoding='utf-8'))
+        countries = json.loads((base / 'model' / 'countries_dict.json').read_text(encoding='utf-8'))
+        with (base / 'metadata' / 'document_metadata.csv').open(encoding='utf-8-sig', newline='') as f:
+            rows = {r['File prefix']: r for r in csv.DictReader(f)}
+    except Exception as exc:
+        return [f'could not compare the document lists ({exc})']
+    problems = []
+    for doc, info in docs.items():
+        row = rows.get(str(doc))
+        if row is None:
+            continue
+        iso = str(info.get('iso') or '')
+        checks = [('country code', iso, row.get('ISO Alpha-3 Code')), ('year', str(info.get('year') or ''), row.get('Year')),
+                  ('type', str(info.get('type') or ''), row.get('NSS/WP/DD'))]
+        name = (countries.get(iso) or {}).get('country') if isinstance(countries.get(iso), dict) else None
+        checks.append(('country name', name or '', row.get('Country')))
+        for label, have, want in checks:
+            if have and want and have.strip() != want.strip():
+                problems.append(f'document {doc}: {label} is "{have}" in the index but "{want}" in the metadata')
+    if len(problems) > limit:
+        problems = problems[:limit] + [f'... and {len(problems) - limit} more']
+    return problems

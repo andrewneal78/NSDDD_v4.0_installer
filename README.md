@@ -168,6 +168,8 @@ The browser-based interface provides:
 - **Semantic search** — AI-powered conceptual matching (finds documents about an idea, not just exact words)
 - **Keyword search** — exact words and phrases with `*` and `?` wildcards (not regular expressions), optional Boolean operators (AND, OR, and NOT after AND, as in `cyber AND NOT terrorism`) and fuzzy matching
 
+  How a term is matched (the same in keyword and Boolean search): a word is an exact word, so `security` does not find `cybersecurity`; the words of a phrase must be separated by a space, or with *Smart phrase matching* (the default) a hyphen or slash, so `cyber security` finds `cyber-security` but not `cybersecurity`; `*` (any letters or digits) and `?` (exactly one) stay inside a word, so `cyber*` finds `cybersecurity` and `"cyber security" OR cybersecurity` finds both forms. Word boundaries are Unicode, so a Russian or German stem does not match inside a longer word, and case is ignored. Chinese, Japanese, Korean and Thai text has no word boundaries and is matched as a substring. Tick *Match inside words* (`match_inside_words` for the AI assistant and API) to find a word where it is part of a longer one, so `Sicherheit` also finds `Sicherheitspolitik`; this suits German, Finnish, Dutch and other languages that build compounds, but it is slower and finds accidental hits such as `hrung` inside `Führung`.
+
 **Filters:**
 - Country (all 125, individually selectable)
 - UN region and subregion
@@ -177,7 +179,7 @@ The browser-based interface provides:
 - Document numbers: search only the documents you list (`431, 138`, or a range such as `100-110`). The **document catalogue** linked at the top of the search page lists every document with its number, and offers the full metadata file as a download
 - Document type (national security strategy, defence white paper, strategic review)
 - Year range (1987–2026)
-- Most recent document per country only
+- Most recent year per country only (every document a country published in its latest year)
 
 **Output:**
 - Results grouped into numbered semantic clusters, with optional AI-written headings

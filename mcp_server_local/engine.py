@@ -163,10 +163,29 @@ def _make_filters(ns: Dict[str, Any], filters: Optional[Dict]) -> Any:
         for key, value in filters.items():
             if not hasattr(f, key):
                 raise ValueError(f'Unknown filter field: {key}')
+            if isinstance(getattr(f, key), list) and isinstance(value, str):
+                value = [value]             # 'FRA' would otherwise be read as the countries F, R and A
             if key == 'doc_numbers':        # numbers or ranges such as "100-110"; the assistant may send numbers or text
-                value = ns['_CC'].parse_document_numbers(' '.join(str(v) for v in (value if isinstance(value, (list, tuple)) else [value])))
+                text = ' '.join(str(v) for v in (value if isinstance(value, (list, tuple)) else [value]))
+                bad = ns['_CC'].unusable_document_numbers(text)
+                if bad:                     # never fall back to searching every document
+                    raise ValueError('doc_numbers must be document numbers or ranges such as "100-110"; cannot use: ' + ', '.join(bad))
+                value = ns['_CC'].parse_document_numbers(text)
+            elif key in ('year_min', 'year_max') and value is not None:
+                try:
+                    value = int(value)
+                except (TypeError, ValueError):
+                    raise ValueError(f'{key} must be a whole year, not {value!r}')
             setattr(f, key, value)
     return f
+
+
+def _check(name: str, value: Any, lo: float, hi: Optional[float] = None, optional: bool = False) -> None:
+    """Refuse a number outside the range the search page itself allows, instead of looping or slicing from the end."""
+    if value is None and optional:
+        return
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < lo or (hi is not None and value > hi):
+        raise ValueError(f'{name} must be a number from {lo:g}' + (f' to {hi:g}' if hi is not None else ' upwards') + f', not {value!r}')
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -314,6 +333,11 @@ def semantic_search(query: str,
                     result_limit: int = 20,
                     count_passages_once: bool = True) -> Dict[str, Any]:
     """Semantic search via the notebook's run_similarity_search."""
+    _check('search_threshold', search_threshold, 0.5, 1.0)
+    _check('cluster_threshold', cluster_threshold, 0.5, 1.0)
+    _check('context_window', context_window, 0, 5)
+    _check('result_limit', result_limit, 1)
+    _check('max_results', max_results, 1, optional=True)
     ns = ensure_loaded()
     with redirect_stdout(sys.stderr):
         cfg = ns['SearchConfig'](
@@ -351,6 +375,7 @@ def semantic_search(query: str,
 
 def keyword_search(keyword: str,
                    smart_boundaries: bool = True,
+                   match_inside_words: bool = False,
                    fuzzy_matching: bool = False,
                    fuzzy_threshold: int = 80,
                    context_window: int = 1,
@@ -361,12 +386,16 @@ def keyword_search(keyword: str,
                    result_limit: int = 20,
                    count_passages_once: bool = True) -> Dict[str, Any]:
     """Exact/fuzzy keyword search via the notebook's run_keyword_search."""
+    _check('fuzzy_threshold', fuzzy_threshold, 50, 100)
+    _check('context_window', context_window, 0, 5)
+    _check('result_limit', result_limit, 1)
     ns = ensure_loaded(semantic=False)
     with redirect_stdout(sys.stderr):
         cfg = ns['SearchConfig'](
             topics=[keyword],
             keyword_search=True,
             smart_boundaries=smart_boundaries,
+            match_inside_words=match_inside_words,
             fuzzy_matching=fuzzy_matching,
             fuzzy_threshold=fuzzy_threshold,
             context_window=context_window,
@@ -383,6 +412,7 @@ def keyword_search(keyword: str,
     response.update({
         'keyword': keyword,
         'smart_boundaries': smart_boundaries,
+        'match_inside_words': match_inside_words,
         'fuzzy_matching': fuzzy_matching,
         'pairs_merged': cluster_info.get('pairs_merged', 0),
         'context_window': context_window,
@@ -394,6 +424,7 @@ def keyword_search(keyword: str,
 
 def boolean_search(query: str,
                    scoring: str = 'match_count',
+                   match_inside_words: bool = False,
                    context_window: int = 1,
                    filters: Optional[Dict] = None,
                    export: bool = False,
@@ -402,6 +433,8 @@ def boolean_search(query: str,
                    result_limit: int = 20,
                    count_passages_once: bool = True) -> Dict[str, Any]:
     """Boolean keyword search (AND, OR, NOT, brackets, "phrases", * and ? wildcards) via the notebook's run_boolean_search."""
+    _check('context_window', context_window, 0, 5)
+    _check('result_limit', result_limit, 1)
     ns = ensure_loaded(semantic=False)
     if scoring not in ('match_count', 'avg_score', 'max_score'):
         return {'error': f"scoring must be 'match_count', 'avg_score' or 'max_score', not {scoring!r}"}
@@ -417,6 +450,7 @@ def boolean_search(query: str,
             topics=[query],
             boolean_mode=True,
             boolean_scoring=scoring,
+            match_inside_words=match_inside_words,
             context_window=context_window,
             filters=_make_filters(ns, filters),
             export_format=export_format,
@@ -432,6 +466,7 @@ def boolean_search(query: str,
         'query': query,
         'search_type': 'boolean',
         'scoring': scoring,
+        'match_inside_words': match_inside_words,
         'search_notes': ([f'{len(results)} segments match, a broad query. Only {result_limit} are returned. Narrow it with AND terms '
                           'or filters (regions, year_min, doc_types), or set export=true to save all of them to a file.']
                          if len(results) > 500 else []),
@@ -483,7 +518,7 @@ def filter_options() -> Dict[str, Any]:
                   'vdem_ranges is a list of {"measure": "v2x_polyarchy", "min": 0.5, "max": null}; vdem_measures lists the choices. '
                   'Within a filter field values are OR; across fields AND. '
                   'countries take ISO3 codes; most_recent_only (bool) keeps each '
-                  "country's most recent document only."),
+                  "country's documents from its latest year only (all of them where several share it)."),
     }
 
 

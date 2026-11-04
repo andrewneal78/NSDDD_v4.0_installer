@@ -42,9 +42,10 @@ RAW_VERSION_URL = (
 ZIP_URL = f"https://github.com/{REPO_OWNER}/{REPO_NAME}/archive/refs/heads/{DEFAULT_BRANCH}.zip"
 
 # Updates (pre-release, October 2026): a download-install (the Windows package, or a Mac install from the GitHub zip) checks for a
-# new version each time it starts, installs it, and tells the user (in this window and on the search page). A git checkout (a
-# developer's working copy) only announces updates; run `python launch.py --update` to pull. Set NSDDD_AUTO_UPDATE=0 to stop
-# automatic installs everywhere, or NSDDD_AUTO_UPDATE=1 to allow them in a git checkout.
+# new version each time it starts, installs it, and tells the user (in this window and on the search page). A git checkout
+# does the same by a fast-forward pull, but only while no tracked file has local changes; a checkout with edits only announces
+# the update (run `python launch.py --update` to pull). Set NSDDD_AUTO_UPDATE=0 to stop automatic installs everywhere, or
+# NSDDD_AUTO_UPDATE=1 to allow them in a git checkout that has local changes.
 AUTO_UPDATE_SETTING = os.environ.get("NSDDD_AUTO_UPDATE", "")
 AUTO_UPDATE_ENABLED = AUTO_UPDATE_SETTING != "0"
 UPDATE_NOTICE = "update_notice.json"

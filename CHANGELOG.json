@@ -1,5 +1,25 @@
 [
   {
+    "version": "2026.11.04.1",
+    "date": "2026-11-04",
+    "changes": [
+      "New metadata file with provenance columns. The document metadata now ends with six columns describing where each document’s text comes from. ‘Text source’ is one of English original, Official English edition, English from bilingual document, Machine translation, Editor-supplied translation, or Unknown. ‘Translation engine’, ‘Translation model’ and ‘Cleanup model’ name the tools used, where they are known. ‘Processing date’ is the date of the record behind the row. ‘Provenance basis’ says what the row rests on: a pipeline record, a checklist record, the translation log, the editor’s statement of which model was in use at the time, or the metadata label only, in which case the row is an inference from the Language labels rather than a record. The first 25 columns are unchanged. The file arrives with the data update. The copy that ships with the program, which is used only when the downloaded one is missing, is the same file.",
+      "Data update 2026.11.04.1. Two documents were reprocessed. Document 835 (Lithuania, National Threat Assessment 2018): its text was cleaned and split into passages again (588 passages, where there were 623), so its passage boundaries and search results differ from before. Document 817 (Serbia, White Paper on Defence 2023): its English text was cleaned again (454 passages, where there were 564) and its links to the Serbian text were rebuilt. The search data and the document metadata are refreshed, and the program asks to download them the next time you start NSDDD."
+    ]
+  },
+  {
+    "version": "2026.11.03.2",
+    "date": "2026-11-03",
+    "changes": [
+      "Keyword and Boolean search now match exact words in every script and treat a phrase as separate words: \"cyber security\" finds cyber-security and cyber/security but no longer cybersecurity, and a wildcard (cyber*) stays inside one word. In the real index this halves the count for \"cyber security\" and removes some matches in Greek and Russian, where the old search also matched inflected forms (ασφάλειας for ασφάλεια). Searches saved before this change may not reproduce exactly.",
+      "New: a \"Match inside words\" tick-box (match_inside_words for the AI assistant and API) finds a word where it is part of a longer word, so Sicherheit also finds Sicherheitspolitik and a Greek or Russian stem finds its inflected forms. It is slower.",
+      "\"Most recent document per country only\" is now \"Most recent year per country only\": the metadata holds a year, not a date, so every document from a country's latest year is kept, and the result no longer depends on the order of the rows.",
+      "Corrected: \"Hits per 1,000 words\" in the normalisation sheet divided by the wrong number of words (the average length of the matched documents times the number of eligible documents), so it was wrong for countries whose documents differ greatly in length. It now divides by the total words of the eligible documents. Re-run any analysis that used this column.",
+      "The AI assistant and API now refuse document numbers they cannot read (instead of searching everything), accept a single country as text, and enforce the search page's limits. A data update that stops part-way records what it installed and fetches only the rest next time. The export's settings sheet records the NSDDD and data versions and the search date, and the Mean score note is corrected. verify_install.py warns if the index and the metadata disagree.",
+      "Metadata: document 560 (Moldova) has M49 code 498, and document 815 now says Slovenian rather than Slovene. The user guide is updated with the corrected hits-per-1,000-words example."
+    ]
+  },
+  {
     "version": "2026.11.03.1",
     "date": "2026-11-03",
     "changes": [

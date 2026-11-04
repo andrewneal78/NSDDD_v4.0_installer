@@ -112,7 +112,7 @@ async def list_tools() -> list[Tool]:
                                                         'The default is 0.70; use 0.75 for evidence.'},
                     'cluster_threshold': {'type': 'number', 'default': 0.78,
                                           'minimum': 0.5, 'maximum': 1.0},
-                    'context_window': {'type': 'integer', 'default': 1,
+                    'context_window': {'type': 'integer', 'default': 1, 'minimum': 0, 'maximum': 5,
                                        'description': 'Segments of surrounding text returned before/after each hit (1 matches the search page)'},
                     'max_results': {'type': 'integer',
                                     'description': 'Cap on results (highest scores kept)'},
@@ -147,15 +147,17 @@ async def list_tools() -> list[Tool]:
                 'properties': {
                     'keyword': {'type': 'string'},
                     'smart_boundaries': {'type': 'boolean', 'default': True,
-                                         'description': 'Allow hyphenated variants'},
+                                         'description': 'Also match hyphenated or slashed variants of a phrase: cyber-security and cyber/security for cyber security (never the single word cybersecurity; use cyber* or an OR for that)'},
+                    'match_inside_words': {'type': 'boolean', 'default': False,
+                                         'description': 'Also match a word where it is part of a longer word (Sicherheit finds Sicherheitspolitik, defence finds counterdefence). Off by default: a word is an exact word. Slower, because every segment in scope is scanned. Useful for German, Finnish, Dutch and other compounding languages'},
                     **({'fuzzy_matching': {'type': 'boolean', 'default': False},
-                        'fuzzy_threshold': {'type': 'integer', 'default': 80}} if _fuzzy else {}),
-                    'context_window': {'type': 'integer', 'default': 1},
+                        'fuzzy_threshold': {'type': 'integer', 'default': 80, 'minimum': 50, 'maximum': 100}} if _fuzzy else {}),
+                    'context_window': {'type': 'integer', 'default': 1, 'minimum': 0, 'maximum': 5},
                     'filters': _FILTERS_SCHEMA,
                     'export': {'type': 'boolean', 'default': False},
                     'export_format': {'type': 'string', 'enum': ['csv', 'xlsx'], 'default': 'xlsx'},
                     'export_name': {'type': 'string'},
-                    'result_limit': {'type': 'integer', 'default': 20},
+                    'result_limit': {'type': 'integer', 'default': 20, 'minimum': 1},
                     'count_passages_once': {'type': 'boolean', 'default': True},
                 },
                 'required': ['keyword'],
@@ -168,7 +170,8 @@ async def list_tools() -> list[Tool]:
                 'context windows and export as keyword_search. Operators: AND (or &), OR (or |), NOT (or !, only as in '
                 '"AND NOT x": a query of NOT terms alone, or NOT inside OR, returns an error), brackets for grouping, "double quotes" for an exact phrase, and wildcards * and ?. '
                 'Precedence is NOT, then AND, then OR, so use brackets. A term with no wildcard matches whole words only '
-                '(use cyber* for cyber, cybersecurity, cyberattack). Example: '
+                '(use cyber* for cyber, cybersecurity, cyberattack). The words of a phrase must be separated by a space, hyphen or slash, '
+                'so "cyber security" does not find cybersecurity, and * stays inside one word. Example: '
                 '(cyber* OR digital) AND "critical infrastructure" AND NOT terrorism. '
                 'Results are not ranked by relevance: match_count scores a segment by how many of the query terms it contains. '
                 'Search the language of the text you want (a term matches only that language); '
@@ -184,12 +187,14 @@ async def list_tools() -> list[Tool]:
                               'description': 'Boolean query, e.g. (nuclear OR radiological) AND weapon* AND NOT "arms control"'},
                     'scoring': {'type': 'string', 'enum': ['match_count', 'avg_score', 'max_score'], 'default': 'match_count',
                                 'description': 'How a segment is scored from its matching terms (match_count is the default)'},
-                    'context_window': {'type': 'integer', 'default': 1},
+                    'match_inside_words': {'type': 'boolean', 'default': False,
+                                           'description': 'Also match a word where it is part of a longer word (Sicherheit finds Sicherheitspolitik). Off by default; slower, because every segment in scope is scanned'},
+                    'context_window': {'type': 'integer', 'default': 1, 'minimum': 0, 'maximum': 5},
                     'filters': _FILTERS_SCHEMA,
                     'export': {'type': 'boolean', 'default': False},
                     'export_format': {'type': 'string', 'enum': ['csv', 'xlsx'], 'default': 'xlsx'},
                     'export_name': {'type': 'string'},
-                    'result_limit': {'type': 'integer', 'default': 20},
+                    'result_limit': {'type': 'integer', 'default': 20, 'minimum': 1},
                     'count_passages_once': {'type': 'boolean', 'default': True},
                 },
                 'required': ['query'],

@@ -178,3 +178,19 @@ def parse_document_numbers(text):
                 seen.add(s)
                 out.append(s)
     return out
+
+
+def unusable_document_numbers(text):
+    """The parts of a document-number list that parse_document_numbers cannot use ('abc', '1-5000'), as a list of strings.
+    An empty list means every part was understood. Callers that must not silently widen a search check this."""
+    bad = []
+    for part in re.split(r'[\s,;]+', str(text or '').strip()):
+        if not part:
+            continue
+        m = re.fullmatch(r'(\d+)\s*[-\u2013]\s*(\d+)', part)
+        if m:
+            if abs(int(m.group(2)) - int(m.group(1))) > 2000:
+                bad.append(part)
+        elif not part.isdigit():
+            bad.append(part)
+    return bad

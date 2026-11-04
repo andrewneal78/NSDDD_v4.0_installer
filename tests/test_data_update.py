@@ -210,3 +210,29 @@ def test_file_in_use_leaves_every_installed_file_as_it_was(world, monkeypatch):
     assert (data / 'model' / 'segments.sqlite').read_text() == 'old index'
     assert not list((data / 'model').glob('*.upd_old'))
     assert du.read_state(data)[0] == du.BASELINE_VERSION
+
+
+def test_failure_after_one_zip_is_reported_honestly_and_resumes(world, monkeypatch):
+    app, data, web = world
+    publish(web, '2099.02.01.1', {'model_files.zip': {'segments.sqlite': 'new index'}, 'viewer_pages.zip': {'1.html': 'new viewer'}})
+    manifest = du.fetch_manifest()
+    changed, _ = du.pending(app, manifest)
+    real, calls = du._swap_in, []
+
+    def flaky(stage, target, mode):
+        calls.append(target)
+        if len(calls) == 2:
+            raise OSError('disk full')
+        return real(stage, target, mode)
+
+    monkeypatch.setattr(du, '_swap_in', flaky)
+    log = []
+    assert not du.apply(app, manifest, changed, log=log.append)
+    assert 'part-way' in ' '.join(log) and 'unchanged' not in ' '.join(log)
+    assert (data / 'model' / 'segments.sqlite').read_text() == 'new index'          # the first zip is in place
+    assert (app / 'XHR' / '1.html').read_text() == 'old viewer'                      # the second was rolled back
+    monkeypatch.setattr(du, '_swap_in', real)
+    changed_again, _ = du.pending(app, manifest)
+    assert changed_again == ['viewer_pages.zip']                                     # only the missing zip is fetched
+    assert du.apply(app, manifest, changed_again, log=lambda *_: None)
+    assert du.pending(app, manifest)[0] == []
