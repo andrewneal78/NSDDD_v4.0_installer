@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.11.05.1",
+    "date": "2026-11-05",
+    "changes": [
+      "When a data update is announced but not installed, the start-up message now says why: a ‘no_data_update’ file next to launch.py, an environment setting, or a start-up that was not set to install. It used to say only that automatic updates were switched off. Update behaviour is unchanged."
+    ]
+  },
+  {
     "version": "2026.11.04.2",
     "date": "2026-11-04",
     "changes": [

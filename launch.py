@@ -414,7 +414,13 @@ def maybe_update_data(cwd: Path, apply: bool = True) -> bool:
             print(f"  Downloading it now (about {size_mb:,.0f} MB). Keep this window open.")
         print("=" * 62)
         if not install_now:
-            print("ℹ️  Not installed (automatic updates are switched off). To update, run:  python launch.py --update-only")
+            if (cwd / DATA_UPDATE_HOLD).exists():
+                why = f"the '{DATA_UPDATE_HOLD}' file next to launch.py holds data updates"
+            elif os.environ.get("NSDDD_AUTO_DATA_UPDATE") == "0" or not AUTO_UPDATE_ENABLED:
+                why = "automatic updates are switched off by an environment setting"
+            else:
+                why = "this start-up was not set to install updates"
+            print(f"ℹ️  Not installed ({why}). To update, run:  python launch.py --update-only")
             return False
         result = data_update.apply(cwd, manifest, changed)
         if result:
